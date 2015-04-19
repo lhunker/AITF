@@ -9,5 +9,6 @@ namespace aitf {
     void nfq_init();
     void nfq_loop();
     void nfq_close();
+    static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*) 
 }
 #endif

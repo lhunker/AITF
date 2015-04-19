@@ -15,8 +15,8 @@ namespace aitf {
             exit(1);
         }
 
-        // Bind to queue 0
-        qh = nfq_create_queue(h,  0, &cb, NULL);
+        // Bind to queue 0 with specified callback function
+        qh = nfq_create_queue(h,  0, &process_packet, NULL);
         if (!qh) {
             fprintf(stderr, "error during nfq_create_queue()\n");
             exit(1);
@@ -34,7 +34,12 @@ namespace aitf {
         nfq_set_queue_maxlen(qh, 3200);
     }
 
-    void nfq_handle_pkt(struct nfq_handle*, char *buf, int len) {
+    static int process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {
+        struct nfqnl_msg_packet_hdr *ph;
+        struct nfqnl_msg_packet_hw *hwph;
+        ph = nfq_get_msg_packet_hdr(nf_data)
+        id = ntohl(ph->packet_id);
+        return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // Or NF_DROP
     }
 
     void nfq_loop() {
@@ -42,7 +47,8 @@ namespace aitf {
         int read_count;
 
         while ((read_count = recv(nfq_fd, buf, sizeof(buf), 0)) && rv >= 0) {
-            nfq_handle_pkt(nfq_h, buf, rv);
+            // This is a system call which takes appropriate action as returned by the callback
+            nfq_handle_packet(nfq_h, buf, rv);
         }
     }
 
