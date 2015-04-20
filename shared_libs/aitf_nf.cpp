@@ -46,17 +46,19 @@ namespace aitf {
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
         struct tcphdr *tcp_info = NULL;
+        struct udphdr *tcp_info = NULL;
         if (nfq_get_payload(nfq_data, &payload)) {
             ip_info = (struct iphdr*)data;
             // TODO: Should add UDP too
             if (ip_info->protocol == IPPROTO_TCP) {
                 tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
+            } else if (ip_info->protocol == IPPROTO_UDP) {
+                udp_info = (struct udphdr*)(data + sizeof(*ip_info));
             }
         }
 
         // TODO: Need to ensure this is only called in hosts connected to us
-        // Also UDP not TCP
-        if (tcp_info && ntohs(tcp_info->dest) == AITF_PORT) {
+        if (udp_info && ntohs(udp_info->dest) == AITF_PORT) {
             handle_aitf_pkt(); // Need to figure out what to do with this
         } else {
             update_rr();
