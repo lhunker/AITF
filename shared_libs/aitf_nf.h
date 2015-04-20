@@ -15,10 +15,21 @@
 
 namespace aitf {
     #define AITF_PORT 40
-    extern struct nfq_handle *nfq_h;
-    extern struct nfq_q_handle *nfq_qh;
-    extern int nfq_fd;
     
+    class NFQ {
+        public:
+            NFQ();
+            void loop();
+        private:
+            struct nfq_handle *h;
+            struct nfq_q_handle *qh;
+            int fd;
+            void handle_aitf_pkt();
+            void add_rr_layer();
+            void remove_rr();
+            void update_rr();
+    }
+
     void nfq_init();
     void nfq_loop();
     void nfq_close();

@@ -12,9 +12,8 @@ namespace aitf {
         return s;
     }
 
-    // TODO: This should be a class
-    // And it should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
-    void nfq_init() {
+    // It should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
+    void NFQ::NFQ() {
         // Open library handle
         h = nfq_open();
         if (!h) {
@@ -101,35 +100,35 @@ namespace aitf {
         return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // TODO: parse to determine if NF_DROP
     }
 
-    void handle_aitf_pkt() {
+    void NFQ::handle_aitf_pkt() {
     }
 
-    void add_rr_layer() {
+    void NFQ::add_rr_layer() {
     }
 
-    void remove_rr() {
+    void NFQ::remove_rr() {
     }
 
-    void update_rr() {
-        // TODO: Outsource to client/server code following this logic
+    void NFQ::update_rr() {
+        // TODO: Outsource to client/server code following this logic - taken care of?
         // If first hop from source, add
         // If last hop to dest and legacy host, remove, otherwise leave intact
         // If host, add to filter table
         // Otherwise, update
     }
 
-    void nfq_loop() {
+    void NFQ::loop() {
         char buf[4096] __attribute__ ((aligned));
         int read_count;
 
-        while ((read_count = recv(nfq_fd, buf, sizeof(buf), 0)) && rv >= 0) {
+        while ((read_count = recv(fd, buf, sizeof(buf), 0)) && rv >= 0) {
             // This is a system call which takes appropriate action as returned by the callback
-            nfq_handle_packet(nfq_h, buf, rv);
+            nfq_handle_packet(h, buf, rv);
         }
     }
 
-    void nfq_close() {
-        nfq_destroy_queue(nfq_qh);
-        nfq_close(nfq_h);
+    void NFQ::nfq_close() {
+        nfq_destroy_queue(qh);
+        nfq_close(h);
     }
 }
