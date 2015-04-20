@@ -14,6 +14,7 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 
 namespace aitf {
+    #define AITF_PORT 40
     extern struct nfq_handle *nfq_h;
     extern struct nfq_q_handle *nfq_qh;
     extern int nfq_fd;

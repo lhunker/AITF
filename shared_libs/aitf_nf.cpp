@@ -1,4 +1,5 @@
 #include "aitf_nf.h"
+#include "aitf_prot.h"
 
 namespace aitf {
     void nfq_init() {
@@ -38,8 +39,41 @@ namespace aitf {
         struct nfqnl_msg_packet_hdr *ph;
         struct nfqnl_msg_packet_hw *hwph;
         ph = nfq_get_msg_packet_hdr(nf_data)
+        hwph = nfq_get_packet_hw(nf_data);
+
         id = ntohl(ph->packet_id);
+        unsigned char *payload;
+        struct iphdr *ip_info = NULL;
+        struct tcphdr *tcp_info = NULL;
+        if (nfq_get_payload(nfq_data, &payload)) {
+            ip_info = (struct iphdr*)data;
+            if (ip_info->protocol == IPPROTO_TCP) {
+                tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
+            }
+        }
+
+        if (tcp_info && ntohs(tcp_info->dest) == AITF_PORT) {
+            handle_aitf_pkt(); // Need to figure out what to do with this
+        } else {
+            update_rr();
+        }
+
         return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // Or NF_DROP
+    }
+
+    void handle_aitf_pkt() {
+    }
+
+    void add_rr_layer() {
+    }
+
+    void remove_rr() {
+    }
+
+    void update_rr() {
+        // If first hop from source, add
+        // If last hop to dest, remove
+        // Otherwise, update
     }
 
     void nfq_loop() {
