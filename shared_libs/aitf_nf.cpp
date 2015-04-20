@@ -1,8 +1,19 @@
+#include <stdio.h>
+#include <string.h>
+#include <arpa/inet.h>
+
 #include "aitf_nf.h"
 #include "aitf_prot.h"
 
 namespace aitf {
+    char* create_str(int l) {
+        char *s = (char*)malloc(sizeof(char) * (l + 1));
+        memset(s, '\0', l + 1);
+        return s;
+    }
+
     // TODO: This should be a class
+    // And it should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
     void nfq_init() {
         // Open library handle
         h = nfq_open();
@@ -33,6 +44,7 @@ namespace aitf {
         // Get file descriptor for this queue
         fd = nfq_fd(h);
 
+        // Set maximum length of the queue (packet buffer) - seems to arbitrary?
         nfq_set_queue_maxlen(qh, 3200);
     }
 
@@ -42,6 +54,7 @@ namespace aitf {
         ph = nfq_get_msg_packet_hdr(nf_data)
         hwph = nfq_get_packet_hw(nf_data);
 
+        // Get packet ID and headers (protocol-appropriate)
         id = ntohl(ph->packet_id);
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
@@ -49,7 +62,6 @@ namespace aitf {
         struct udphdr *tcp_info = NULL;
         if (nfq_get_payload(nfq_data, &payload)) {
             ip_info = (struct iphdr*)data;
-            // TODO: Should add UDP too
             if (ip_info->protocol == IPPROTO_TCP) {
                 tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
             } else if (ip_info->protocol == IPPROTO_UDP) {
@@ -57,14 +69,36 @@ namespace aitf {
             }
         }
 
-        // TODO: Need to ensure this is only called in hosts connected to us
-        if (udp_info && ntohs(udp_info->dest) == AITF_PORT) {
-            handle_aitf_pkt(); // Need to figure out what to do with this
+        // Get hops from me to destination to determine if host is in my subnet
+        // or destination is me
+        // Hops start at -1 to account for first line of traceroute
+        int hops = -1;
+        struct in_addr ip_addr;
+        ip_addr.s_addr = ip_info->daddr;
+        char *ip = inet_ntoa(ip_addr);
+        char *hop_cmd = create_str(strlen(ip) + 20);
+        sprintf(hop_cmd, "traceroute %s", ip);
+        FILE *pipe = popen(hop_cmd, "r");
+        if (pipe) {
+            char *buf = create_str(1000);
+            fgets(buffer, 1000, pipe);
+            pclose(pipe);
+            for (int i = 0; i < 1000; i++) {
+                if (buffer[i] == '\0') {break;}
+                else if (buffer[i] == '\n') {hops++;}
+            }
+
+        }
+
+        // If one hop away, then this AITF packet may need to be intercepted by us
+        // as the gateway
+        if ((udp_info && ntohs(udp_info->dest) == AITF_PORT && hops == 1)) { // TODO: Or destination address is one of my addresses - fixed with hops and traceroute?
+            handle_aitf_pkt(); // TODO: Need to figure out what to do with this
         } else {
             update_rr();
         }
 
-        return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // Or NF_DROP
+        return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // TODO: parse to determine if NF_DROP
     }
 
     void handle_aitf_pkt() {
@@ -77,7 +111,7 @@ namespace aitf {
     }
 
     void update_rr() {
-        // Outsource to client/server code following this logic
+        // TODO: Outsource to client/server code following this logic
         // If first hop from source, add
         // If last hop to dest and legacy host, remove, otherwise leave intact
         // If host, add to filter table
