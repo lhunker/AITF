@@ -3,10 +3,6 @@
 #include <time.h>
 #include "aitf_prot.h"
 
-using std::find;
-using std::vector;
-using std::queue;
-
 namespace aitf {
     Flow::Flow() {
         queue<int> ips(6);

@@ -5,6 +5,9 @@
 #include <vector.h>
 #include <queue.h>
 
+using std::vector;
+using std::queue;
+
 namespace aitf {
     // Network protocol modes
     #define AITF_HELO 0
@@ -16,18 +19,18 @@ namespace aitf {
             Flow();
             void AddHop(int, int);
         private:
-            std::queue<int> ips;
-            std::queue<int> hashes;
+            queue<int> ips;
+            queue<int> hashes;
     }
 
     class FlowPaths {
         public:
             FlowPaths();
-            void AddFlow(int[6]);
+            void AddFlow(Flow);
         private:
-            std::vector<int[6]> route_ips;
-            std::vector<int> pkt_count;
-            std::vector<int> pkt_times;
+            vector<Flow> route_ips;
+            vector<int> pkt_count;
+            vector<int> pkt_times;
             void ResetCount();
 
     }
