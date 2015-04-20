@@ -2,6 +2,7 @@
 #include "aitf_prot.h"
 
 namespace aitf {
+    // TODO: This should be a class
     void nfq_init() {
         // Open library handle
         h = nfq_open();
@@ -47,11 +48,14 @@ namespace aitf {
         struct tcphdr *tcp_info = NULL;
         if (nfq_get_payload(nfq_data, &payload)) {
             ip_info = (struct iphdr*)data;
+            // TODO: Should add UDP too
             if (ip_info->protocol == IPPROTO_TCP) {
                 tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
             }
         }
 
+        // TODO: Need to ensure this is only called in hosts connected to us
+        // Also UDP not TCP
         if (tcp_info && ntohs(tcp_info->dest) == AITF_PORT) {
             handle_aitf_pkt(); // Need to figure out what to do with this
         } else {
@@ -71,8 +75,10 @@ namespace aitf {
     }
 
     void update_rr() {
+        // Outsource to client/server code following this logic
         // If first hop from source, add
-        // If last hop to dest, remove
+        // If last hop to dest and legacy host, remove, otherwise leave intact
+        // If host, add to filter table
         // Otherwise, update
     }
 
