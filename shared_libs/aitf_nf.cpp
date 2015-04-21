@@ -28,7 +28,7 @@ namespace aitf {
         }
 
         // Bind to queue 0 with specified callback function
-        qh = nfq_create_queue(h, 0, &aitf::NFQ::process_packet, NULL);
+        qh = nfq_create_queue(h, 0, &aitf::NFQ::process_packet, this);
         if (!qh) {
             fprintf(stderr, "error during nfq_create_queue()\n");
             exit(1);
@@ -48,6 +48,7 @@ namespace aitf {
     }
 
     int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {
+        NFQ *nf = (NFQ*)data;
         struct nfqnl_msg_packet_hdr *ph;
         struct nfqnl_msg_packet_hw *hwph;
         ph = nfq_get_msg_packet_hdr(nf_data);
@@ -96,9 +97,9 @@ namespace aitf {
         // If one hop away, then this AITF packet may need to be intercepted by us
         // as the gateway
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT && hops == 1)) { // TODO: Or destination address is one of my addresses - fixed with hops and traceroute?
-            handle_aitf_pkt(); // TODO: Need to figure out what to do with this
+            nf->handle_aitf_pkt(); // TODO: Need to figure out what to do with this
         } else {
-            update_rr();
+            nf->update_rr();
         }
 
         return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // TODO: parse to determine if NF_DROP

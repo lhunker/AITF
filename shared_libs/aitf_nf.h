@@ -31,7 +31,7 @@ namespace aitf {
             void add_rr_layer();
             void remove_rr();
             void update_rr();
-            int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
+            static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
     };
 
 };
