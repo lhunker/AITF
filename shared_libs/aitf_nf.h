@@ -14,12 +14,14 @@
 #include <libnetfilter_queue/libnetfilter_queue.h>
 
 namespace aitf {
+    char* create_str(int);
+
     #define AITF_PORT 40
-    
     class NFQ {
         public:
             NFQ();
             void loop();
+            void close();
         private:
             struct nfq_handle *h;
             struct nfq_q_handle *qh;
@@ -28,11 +30,8 @@ namespace aitf {
             void add_rr_layer();
             void remove_rr();
             void update_rr();
-    }
+            int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
+    };
 
-    void nfq_init();
-    void nfq_loop();
-    void nfq_close();
-    static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*) 
-}
+};
 #endif

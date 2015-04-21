@@ -13,7 +13,7 @@ namespace aitf {
     }
 
     // It should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
-    void NFQ::NFQ() {
+    NFQ::NFQ() {
         // Open library handle
         h = nfq_open();
         if (!h) {
@@ -28,7 +28,7 @@ namespace aitf {
         }
 
         // Bind to queue 0 with specified callback function
-        qh = nfq_create_queue(h,  0, &process_packet, NULL);
+        qh = nfq_create_queue(h, 0, &aitf::NFQ::process_packet, NULL);
         if (!qh) {
             fprintf(stderr, "error during nfq_create_queue()\n");
             exit(1);
@@ -47,24 +47,28 @@ namespace aitf {
         nfq_set_queue_maxlen(qh, 3200);
     }
 
-    static int process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {
+    int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {
         struct nfqnl_msg_packet_hdr *ph;
         struct nfqnl_msg_packet_hw *hwph;
-        ph = nfq_get_msg_packet_hdr(nf_data)
+        ph = nfq_get_msg_packet_hdr(nf_data);
         hwph = nfq_get_packet_hw(nf_data);
 
         // Get packet ID and headers (protocol-appropriate)
-        id = ntohl(ph->packet_id);
+        int id = ntohl(ph->packet_id);
+        printf("Got packet with id %d\n", id);
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
         struct tcphdr *tcp_info = NULL;
-        struct udphdr *tcp_info = NULL;
-        if (nfq_get_payload(nfq_data, &payload)) {
+        struct udphdr *udp_info = NULL;
+        if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
-            if (ip_info->protocol == IPPROTO_TCP) {
-                tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
-            } else if (ip_info->protocol == IPPROTO_UDP) {
-                udp_info = (struct udphdr*)(data + sizeof(*ip_info));
+            if (ip_info) {
+                // The addition here strips off the IP header
+                if (ip_info->protocol == IPPROTO_TCP) {
+                    tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
+                } else if (ip_info->protocol == IPPROTO_UDP) {
+                    udp_info = (struct udphdr*)(data + sizeof(*ip_info));
+                }
             }
         }
 
@@ -79,7 +83,7 @@ namespace aitf {
         sprintf(hop_cmd, "traceroute %s", ip);
         FILE *pipe = popen(hop_cmd, "r");
         if (pipe) {
-            char *buf = create_str(1000);
+            char *buffer = create_str(1000);
             fgets(buffer, 1000, pipe);
             pclose(pipe);
             for (int i = 0; i < 1000; i++) {
@@ -121,13 +125,13 @@ namespace aitf {
         char buf[4096] __attribute__ ((aligned));
         int read_count;
 
-        while ((read_count = recv(fd, buf, sizeof(buf), 0)) && rv >= 0) {
+        while ((read_count = recv(fd, buf, sizeof(buf), 0)) && read_count >= 0) {
             // This is a system call which takes appropriate action as returned by the callback
-            nfq_handle_packet(h, buf, rv);
+            nfq_handle_packet(h, buf, read_count);
         }
     }
 
-    void NFQ::nfq_close() {
+    void NFQ::close() {
         nfq_destroy_queue(qh);
         nfq_close(h);
     }

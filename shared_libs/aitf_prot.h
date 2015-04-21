@@ -2,8 +2,8 @@
 #define __AITF_PROT_H
 
 
-#include <vector.h>
-#include <queue.h>
+#include <vector>
+#include <queue>
 
 using std::vector;
 using std::queue;
@@ -21,35 +21,36 @@ namespace aitf {
         private:
             queue<int> ips;
             queue<int> hashes;
-    }
+    };
 
     class FlowPaths {
         public:
             FlowPaths();
             void AddFlow(Flow);
         private:
+            int timeout;
             vector<Flow> route_ips;
             vector<int> pkt_count;
             vector<int> pkt_times;
-            void ResetCount();
+            void ResetCount(int);
 
-    }
+    };
 
     class AITFPacket {
         public:
-           AITFPacket(unsigned:4);
-           AITFPacket(unsigned:4,unsigned:16,unsigned:64);
+           AITFPacket(unsigned);
+           AITFPacket(unsigned,unsigned,char[16]);
            unsigned get_mode();
            unsigned get_seq();
-           unsigned get_nonce();
+           char* get_nonce();
         private:
-            unsigned mode:4;
-            unsigned sequence:16;
+            unsigned mode;
+            unsigned sequence;
             Flow flow;
             char nonce[16];
-            void set_mode(unsigned:4);
-            void set_seq(unsigned:16);
+            void set_mode(unsigned);
+            void set_seq(unsigned);
             void set_nonce(char[16]);
-    }
+    };
 }
 #endif
