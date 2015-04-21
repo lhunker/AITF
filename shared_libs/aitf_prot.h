@@ -3,10 +3,10 @@
 
 
 #include <vector>
-#include <queue>
+#include <deque>
 
 using std::vector;
-using std::queue;
+using std::deque;
 
 namespace aitf {
     unsigned char* create_ustr(int l);
@@ -20,9 +20,10 @@ namespace aitf {
         public:
             Flow();
             void AddHop(int, int);
+            const bool operator==(const Flow&);
         private:
-            queue<int> ips;
-            queue<int> hashes;
+            deque<int> ips;
+            deque<int> hashes;
     };
 
     class FlowPaths {

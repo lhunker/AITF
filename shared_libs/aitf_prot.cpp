@@ -17,9 +17,14 @@ namespace aitf {
     void Flow::AddHop(int ip, int hash) {
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
-        if (ips.size() == 6) {ips.pop(); hashes.pop();}
-        ips.push(ip);
-        hashes.push(hash);
+        if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
+        ips.push_back(ip);
+        hashes.push_back(hash);
+    }
+
+    const bool Flow::operator==(const Flow &f) {
+        for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i) || hashes.at(i) != f.hashes.at(i)) {return false;}}
+        return true;
     }
 
     FlowPaths::FlowPaths() {
@@ -34,7 +39,6 @@ namespace aitf {
     void FlowPaths::AddFlow(Flow flow) {
         // Check if flow already exists in table
         for (int i = 0; i < route_ips.size(); i++) {
-            // TODO: Override flow equality operator
             // If yes, check that time hasn't expired and either reset
             // or increment count
             if (route_ips[i] == flow) {
