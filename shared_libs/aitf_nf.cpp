@@ -12,8 +12,8 @@ namespace aitf {
         return s;
     }
 
-    // It should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
-    NFQ::NFQ() {
+    // TODO: NFQ class should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
+    NFQ::NFQ() {/*{{{*/
         // Open library handle
         h = nfq_open();
         if (!h) {
@@ -45,9 +45,14 @@ namespace aitf {
 
         // Set maximum length of the queue (packet buffer) - seems to arbitrary?
         nfq_set_queue_maxlen(qh, 3200);
-    }
+    }/*}}}*/
 
-    int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {
+    bool NFQ::check_filters() {/*{{{*/
+        // TODO: write this
+        return true;
+    }/*}}}*/
+
+    int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {/*{{{*/
         NFQ *nf = (NFQ*)data;
         struct nfqnl_msg_packet_hdr *ph;
         struct nfqnl_msg_packet_hw *hwph;
@@ -79,27 +84,39 @@ namespace aitf {
             nf->update_rr();
         }
 
-        return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL); // TODO: parse to determine if NF_DROP
-    }
+        int accept = NF_ACCEPT;
+        if (nf->check_filters()) {accept = NF_DROP;}
+        return nfq_set_verdict(qh, id, accept, 0, NULL);
+    }/*}}}*/
 
-    void NFQ::handle_aitf_pkt() {
-    }
+    void NFQ::handle_aitf_pkt() {/*{{{*/
+    }/*}}}*/
 
-    void NFQ::add_rr_layer() {
-    }
+    /* TODO:
+      * Okay, so the RR stuff (after talking to the guys here at NetOps)
+      * should be inserted between the IP header and the TCP header.
+      * So it appears the tcp/udp stuff is a subset of the IP header, meaning
+      * we need to drop the existing ip header and recreate it using our
+      * custom AITFPacket class then append the tcp/udp header
+      * Other protocol support, maybe ICMP? Or do we just forward those straight on?
+    */
+    void NFQ::add_rr_layer() {/*{{{*/
+        // TODO
+    }/*}}}*/
 
-    void NFQ::remove_rr() {
-    }
+    void NFQ::remove_rr() {/*{{{*/
+        // TODO
+    }/*}}}*/
 
-    void NFQ::update_rr() {
+    void NFQ::update_rr() {/*{{{*/
         // TODO: Outsource to client/server code following this logic - taken care of?
         // If first hop from source, add
         // If last hop to dest and legacy host, remove, otherwise leave intact
         // If host, add to filter table
         // Otherwise, update
-    }
+    }/*}}}*/
 
-    void NFQ::loop() {
+    void NFQ::loop() {/*{{{*/
         char buf[4096] __attribute__ ((aligned));
         int read_count;
 
@@ -107,10 +124,10 @@ namespace aitf {
             // This is a system call which takes appropriate action as returned by the callback
             nfq_handle_packet(h, buf, read_count);
         }
-    }
+    }/*}}}*/
 
-    void NFQ::close() {
+    void NFQ::close() {/*{{{*/
         nfq_destroy_queue(qh);
         nfq_close(h);
-    }
+    }/*}}}*/
 }
