@@ -65,9 +65,9 @@ namespace aitf {
             if (ip_info) {
                 // The addition here strips off the IP header
                 if (ip_info->protocol == IPPROTO_TCP) {
-                    tcp_info = (struct tcphdr*)(data + sizeof(*ip_info));
+                    tcp_info = (struct tcphdr*)(payload + sizeof(*ip_info));
                 } else if (ip_info->protocol == IPPROTO_UDP) {
-                    udp_info = (struct udphdr*)(data + sizeof(*ip_info));
+                    udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
                 }
             }
         }
