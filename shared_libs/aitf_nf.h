@@ -27,7 +27,7 @@ namespace aitf {
             struct nfq_handle *h;
             struct nfq_q_handle *qh;
             int fd;
-            void handle_aitf_pkt();
+            void handle_aitf_pkt(AITFPacket);
             void add_rr_layer();
             void remove_rr();
             void update_rr();

@@ -70,6 +70,7 @@ namespace aitf {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
                 // The addition here strips off the IP header
+                // TODO: This will NOT work if we follow the insertion of our route record here
                 if (ip_info->protocol == IPPROTO_TCP) {
                     tcp_info = (struct tcphdr*)(payload + sizeof(*ip_info));
                 } else if (ip_info->protocol == IPPROTO_UDP) {
@@ -89,7 +90,21 @@ namespace aitf {
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 
-    void NFQ::handle_aitf_pkt() {/*{{{*/
+    void NFQ::handle_aitf_pkt(AITFPacket pkt) {/*{{{*/
+        switch (pkt.mode) {
+            case AITF_HELO:
+                AITFPacket resp(AITF_CONF, pkt.seq, pkt.nonce);
+                break;
+            case AITF_CONF:
+                AITFPacket resp(pkt.mode, pkt.seq, pkt.nonce);
+                // TODO: Take action here
+                break;
+            case AITF_ACK:
+                // Request/action should have been taken
+                break;
+            default:
+                return;
+        }
     }/*}}}*/
 
     /* TODO:
