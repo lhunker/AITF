@@ -90,13 +90,13 @@ namespace aitf {
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 
-    void NFQ::handle_aitf_pkt(AITFPacket pkt) {/*{{{*/
-        switch (pkt.mode) {
+    void NFQ::handle_aitf_pkt(aitf::AITFPacket &pkt) {/*{{{*/
+        switch (pkt.get_mode()) {
             case AITF_HELO:
-                AITFPacket resp(AITF_CONF, pkt.seq, pkt.nonce);
+                AITFPacket resp(AITF_CONF, pkt.get_seq(), pkt.get_nonce());
                 break;
             case AITF_CONF:
-                AITFPacket resp(pkt.mode, pkt.seq, pkt.nonce);
+                AITFPacket resp(pkt.get_mode(), pkt.get_seq(), pkt.get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:
@@ -104,6 +104,7 @@ namespace aitf {
                 break;
             default:
                 return;
+                break;
         }
     }/*}}}*/
 

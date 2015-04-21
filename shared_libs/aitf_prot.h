@@ -21,6 +21,8 @@ namespace aitf {
             Flow();
             void AddHop(int, int);
             const bool operator==(const Flow&);
+           // Used to make a string for storing
+            char* serialize(int);
         private:
             deque<int> ips;
             deque<int> hashes;
@@ -46,6 +48,10 @@ namespace aitf {
            unsigned get_mode();
            unsigned get_seq();
            char* get_nonce();
+           // Used to make a string for storing
+           char* serialize();
+           // Used when sending over the network
+           char* pack();
         private:
             unsigned mode;
             unsigned sequence;
