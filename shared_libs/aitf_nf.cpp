@@ -73,30 +73,7 @@ namespace aitf {
             }
         }
 
-        // Get hops from me to destination to determine if host is in my subnet
-        // or destination is me
-        // Hops start at -1 to account for first line of traceroute
-        int hops = -1;
-        struct in_addr ip_addr;
-        ip_addr.s_addr = ip_info->daddr;
-        char *ip = inet_ntoa(ip_addr);
-        char *hop_cmd = create_str(strlen(ip) + 20);
-        sprintf(hop_cmd, "traceroute %s", ip);
-        FILE *pipe = popen(hop_cmd, "r");
-        if (pipe) {
-            char *buffer = create_str(1000);
-            fgets(buffer, 1000, pipe);
-            pclose(pipe);
-            for (int i = 0; i < 1000; i++) {
-                if (buffer[i] == '\0') {break;}
-                else if (buffer[i] == '\n') {hops++;}
-            }
-
-        }
-
-        // If one hop away, then this AITF packet may need to be intercepted by us
-        // as the gateway
-        if ((udp_info && ntohs(udp_info->dest) == AITF_PORT && hops == 1)) { // TODO: Or destination address is one of my addresses - fixed with hops and traceroute?
+        if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             nf->handle_aitf_pkt(); // TODO: Need to figure out what to do with this
         } else {
             nf->update_rr();
