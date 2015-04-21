@@ -9,6 +9,8 @@ using std::vector;
 using std::queue;
 
 namespace aitf {
+    unsigned char* create_ustr(int l);
+
     // Network protocol modes
     #define AITF_HELO 0
     #define AITF_CONF 1
@@ -51,6 +53,7 @@ namespace aitf {
             void set_mode(unsigned);
             void set_seq(unsigned);
             void set_nonce(char[16]);
+            void set_nonce(unsigned char[16]);
     };
 }
 #endif

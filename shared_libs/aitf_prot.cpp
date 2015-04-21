@@ -1,10 +1,16 @@
 #include <openssl/rand.h>
 #include <math.h>
 #include <time.h>
+#include <string.h>
 #include "aitf_prot.h"
-#include "aitf_nf.h"
 
 namespace aitf {
+    unsigned char* create_ustr(int l) {
+        unsigned char *s = (unsigned char*)malloc(sizeof(char) * (l + 1));
+        memset(s, '\0', l + 1);
+        return s;
+    }
+
     Flow::Flow() {
     }
 
@@ -68,6 +74,10 @@ namespace aitf {
         for (int i = 0; i < 16; i++) {nonce[i] = n[i];}
     }
 
+    void AITFPacket::set_nonce(unsigned char n[16]) {
+        for (int i = 0; i < 16; i++) {nonce[i] = n[i];}
+    }
+
     unsigned AITFPacket::get_mode() {
         return mode;
     }
@@ -89,7 +99,7 @@ namespace aitf {
         set_seq(fmod(rand(), (pow(2, 8))));
         // Using openSSL for characters
         RAND_load_file("/dev/urandom", 1024);
-        char *buf = create_str(16);
+        unsigned char *buf = create_ustr(16);
         RAND_bytes(buf, 16);
         set_nonce(buf);
         Flow flow;
