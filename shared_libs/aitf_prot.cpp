@@ -65,12 +65,13 @@ namespace aitf {
     }
 
     // Getters and setters
-    // TODO: set bit length for variables on these
     void AITFPacket::set_mode(unsigned m) {
+        m = m & 0xF;
         mode = m;
     }
 
     void AITFPacket::set_seq(unsigned seq) {
+        seq = seq & 0xFFFF;
         sequence = seq;
     }
 
