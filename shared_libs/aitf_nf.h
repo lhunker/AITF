@@ -29,13 +29,13 @@ namespace aitf {
             struct nfq_handle *h;
             struct nfq_q_handle *qh;
             int fd;
+            Flow extract_rr(struct iphdr*);
             void handle_aitf_pkt(AITFPacket&);
-            void add_rr_layer();
+            void add_rr_and_forward(struct iphdr*);
             void remove_rr();
-            void update_rr();
+            void update_rr_and_forward(struct iphdr*, Flow);
             bool check_filters();
             static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
     };
-
 };
 #endif

@@ -6,11 +6,11 @@
 #include "aitf_prot.h"
 
 namespace aitf {
-    char* create_str(int l) {
+    char* create_str(int l) {/*{{{*/
         char *s = (char*)malloc(sizeof(char) * (l + 1));
         memset(s, '\0', l + 1);
         return s;
-    }
+    }/*}}}*/
 
     // TODO: NFQ class should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
     NFQ::NFQ() {/*{{{*/
@@ -64,17 +64,17 @@ namespace aitf {
         printf("Got packet with id %d\n", id);
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
-        struct tcphdr *tcp_info = NULL;
         struct udphdr *udp_info = NULL;
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
-                // The addition here strips off the IP header
-                // TODO: This will NOT work if we follow the insertion of our route record here
-                if (ip_info->protocol == IPPROTO_TCP) {
-                    tcp_info = (struct tcphdr*)(payload + sizeof(*ip_info));
-                } else if (ip_info->protocol == IPPROTO_UDP) {
-                    udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
+                Flow flow = extract_rr(ip_info);
+                if (flow == NULL) {
+                    // The addition here strips off the IP header
+                    // TODO: This will NOT work if we follow the insertion of our route record here
+                    if (ip_info->protocol == IPPROTO_UDP) {
+                        udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
+                    }
                 }
             }
         }
@@ -83,8 +83,11 @@ namespace aitf {
             // TODO: Temporary packet created - should be pulled from TCP/UDP headers
             AITFPacket a(AITF_HELO);
             nf->handle_aitf_pkt(a); // TODO: Need to figure out what to do with this
+        } else if (flow) {
+            nf->update_rr_and_forward(ip_info, flow);
+        // If destination in my subnet and legacy, remove rr
         } else {
-            nf->update_rr();
+            nf->add_rr_and_forward(ip_info);
         }
 
         int accept = NF_ACCEPT;
@@ -111,6 +114,11 @@ namespace aitf {
         }
     }/*}}}*/
 
+Flow NFQ::extract_rr(struct iphdr* iph) {
+    for (int i = 0; i < 64; i++) {if (*(iph + sizeof(struct iphdr) + i) != '\0') return NULL;}
+    return (Flow)(iph + sizeof(struct iphdr) + 64);
+}
+
     /* TODO:
       * Okay, so the RR stuff (after talking to the guys here at NetOps)
       * should be inserted between the IP header and the TCP header.
@@ -119,7 +127,7 @@ namespace aitf {
       * custom AITFPacket class then append the tcp/udp header
       * Other protocol support, maybe ICMP? Or do we just forward those straight on?
     */
-    void NFQ::add_rr_layer() {/*{{{*/
+    void NFQ::add_rr_and_forward(struct iphdr* iph) {/*{{{*/
         // TODO
     }/*}}}*/
 
@@ -127,7 +135,7 @@ namespace aitf {
         // TODO
     }/*}}}*/
 
-    void NFQ::update_rr() {/*{{{*/
+    void NFQ::update_rr_and_forward(struct iphdr *iph, Flow flow) {/*{{{*/
         // TODO: Outsource to client/server code following this logic - taken care of?
         // If first hop from source, add
         // If last hop to dest and legacy host, remove, otherwise leave intact
