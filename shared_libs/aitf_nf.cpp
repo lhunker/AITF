@@ -80,7 +80,9 @@ namespace aitf {
         }
 
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
-            nf->handle_aitf_pkt(); // TODO: Need to figure out what to do with this
+            // TODO: Temporary packet created - should be pulled from TCP/UDP headers
+            AITFPacket a(AITF_HELO);
+            nf->handle_aitf_pkt(a); // TODO: Need to figure out what to do with this
         } else {
             nf->update_rr();
         }
@@ -91,12 +93,13 @@ namespace aitf {
     }/*}}}*/
 
     void NFQ::handle_aitf_pkt(aitf::AITFPacket &pkt) {/*{{{*/
+        AITFPacket resp;
         switch (pkt.get_mode()) {
             case AITF_HELO:
-                AITFPacket resp(AITF_CONF, pkt.get_seq(), pkt.get_nonce());
+                resp.set_values(AITF_CONF, pkt.get_seq(), pkt.get_nonce());
                 break;
             case AITF_CONF:
-                AITFPacket resp(pkt.get_mode(), pkt.get_seq(), pkt.get_nonce());
+                resp.set_values(pkt.get_mode(), pkt.get_seq(), pkt.get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:

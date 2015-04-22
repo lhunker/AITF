@@ -43,11 +43,13 @@ namespace aitf {
 
     class AITFPacket {
         public:
+           AITFPacket();
            AITFPacket(unsigned);
            AITFPacket(unsigned,unsigned,char[16]);
            unsigned get_mode();
            unsigned get_seq();
            char* get_nonce();
+           void set_values(unsigned,unsigned,char[16]);
            // Used to make a string for storing
            char* serialize();
            // Used when sending over the network

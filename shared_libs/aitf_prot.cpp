@@ -95,7 +95,16 @@ namespace aitf {
         return nonce;
     }
 
+    void AITFPacket::set_values(unsigned m, unsigned seq, char n[16]) {
+        set_mode(m);
+        set_seq(seq);
+        set_nonce(n);
+    }
+
     // For initial connections in which we do not have values
+    AITFPacket::AITFPacket() {
+    }
+
     AITFPacket::AITFPacket(unsigned m) {
         set_mode(m);
 
