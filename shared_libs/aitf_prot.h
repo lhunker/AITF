@@ -22,7 +22,7 @@ namespace aitf {
             void AddHop(int, int);
             const bool operator==(const Flow&);
            // Used to make a string for storing
-            char* serialize(int);
+            char* serialize();
         private:
             deque<int> ips;
             deque<int> hashes;

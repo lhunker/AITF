@@ -65,29 +65,30 @@ namespace aitf {
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
         struct udphdr *udp_info = NULL;
+        Flow flow;
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
-                Flow flow = extract_rr(ip_info);
-                if (flow == NULL) {
+                Flow *flow = nf->extract_rr(payload);
+                if (flow) {
                     // The addition here strips off the IP header
-                    // TODO: This will NOT work if we follow the insertion of our route record here
                     if (ip_info->protocol == IPPROTO_UDP) {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
                     }
+                } else {
+                    // TODO: skip over flow and get header in case AITF packet with RR
                 }
             }
         }
 
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             // TODO: Temporary packet created - should be pulled from TCP/UDP headers
-            AITFPacket a(AITF_HELO);
-            nf->handle_aitf_pkt(a); // TODO: Need to figure out what to do with this
-        } else if (flow) {
+            nf->handle_aitf_pkt(nullptr); // TODO: Need to figure out what to do with this
+        } else if (strcmp(flow.serialize(), "") != 0) {
             nf->update_rr_and_forward(ip_info, flow);
         // If destination in my subnet and legacy, remove rr
         } else {
-            nf->add_rr_and_forward(ip_info);
+            nf->add_rr_and_forward(payload);
         }
 
         int accept = NF_ACCEPT;
@@ -95,14 +96,14 @@ namespace aitf {
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 
-    void NFQ::handle_aitf_pkt(aitf::AITFPacket &pkt) {/*{{{*/
+    void NFQ::handle_aitf_pkt(aitf::AITFPacket *pkt) {/*{{{*/
         AITFPacket resp;
-        switch (pkt.get_mode()) {
+        switch (pkt->get_mode()) {
             case AITF_HELO:
-                resp.set_values(AITF_CONF, pkt.get_seq(), pkt.get_nonce());
+                resp.set_values(AITF_CONF, pkt->get_seq(), pkt->get_nonce());
                 break;
             case AITF_CONF:
-                resp.set_values(pkt.get_mode(), pkt.get_seq(), pkt.get_nonce());
+                resp.set_values(pkt->get_mode(), pkt->get_seq(), pkt->get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:
@@ -114,9 +115,10 @@ namespace aitf {
         }
     }/*}}}*/
 
-Flow NFQ::extract_rr(struct iphdr* iph) {
-    for (int i = 0; i < 64; i++) {if (*(iph + sizeof(struct iphdr) + i) != '\0') return NULL;}
-    return (Flow)(iph + sizeof(struct iphdr) + 64);
+Flow* NFQ::extract_rr(unsigned char* payload) {
+    for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return nullptr;}
+    // TODO: this needs to populate a Flow somehow
+    return &(payload + sizeof(struct iphdr) + 64);
 }
 
     /* TODO:
@@ -127,8 +129,9 @@ Flow NFQ::extract_rr(struct iphdr* iph) {
       * custom AITFPacket class then append the tcp/udp header
       * Other protocol support, maybe ICMP? Or do we just forward those straight on?
     */
-    void NFQ::add_rr_and_forward(struct iphdr* iph) {/*{{{*/
-        // TODO
+    void NFQ::add_rr_and_forward(unsigned char *payload) {/*{{{*/
+        unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
+        // TODO: split old payload after iphdr, insert flow, append other data and then swap for existing packet
     }/*}}}*/
 
     void NFQ::remove_rr() {/*{{{*/

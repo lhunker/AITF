@@ -16,6 +16,21 @@
 
 #include "aitf_prot.h"
 
+// nullptr emulation
+class nullptr_t {
+  public:
+    template<class T>
+    inline operator T*() const // convertible to any type of null non-member pointer...
+    {return 0;}
+
+    template<class C, class T>
+    inline operator T C::*() const   // or any type of null member pointer...
+    {return 0;}
+
+  private:
+    void operator&() const;  // Can't take address of nullptr
+} nullptr = {};
+
 namespace aitf {
     char* create_str(int);
 
@@ -29,9 +44,9 @@ namespace aitf {
             struct nfq_handle *h;
             struct nfq_q_handle *qh;
             int fd;
-            Flow extract_rr(struct iphdr*);
-            void handle_aitf_pkt(AITFPacket&);
-            void add_rr_and_forward(struct iphdr*);
+            Flow* extract_rr(unsigned char*);
+            void handle_aitf_pkt(AITFPacket*);
+            void add_rr_and_forward(unsigned char*);
             void remove_rr();
             void update_rr_and_forward(struct iphdr*, Flow);
             bool check_filters();
