@@ -31,9 +31,11 @@ namespace aitf {
             int fd;
             char *ips[MAX_IPS];
             Flow* extract_rr(unsigned char*);
-            virtual void handle_aitf_pkt(AITFPacket*);
-            virtual void update_rr(struct iphdr*, Flow);
-            bool check_filters();
+
+        virtual void handle_aitf_pkt(AITFPacket *) = 0;  //pure virtual
+        virtual void update_rr(struct iphdr *, Flow) = 0;
+
+        virtual bool check_filters();
             static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
     };/*}}}*/
 };

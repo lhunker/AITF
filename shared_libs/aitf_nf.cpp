@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
 #include <ifaddrs.h>
 
 #include "aitf_nf.h"
-#include "aitf_prot.h"
 #include "common.h"
 
 // TODO: the +64s aren't accounting for the size field of the AITF layer
@@ -66,6 +64,7 @@ namespace aitf {
 
     bool NFQ::check_filters() {/*{{{*/
         // TODO: write this
+        //Is this really common? if not change to pure virtual
         return true;
     }/*}}}*/
 
@@ -146,6 +145,8 @@ namespace aitf {
         }
     }/*}}}*/
 
+
+    //TODO should really be in destructor
     void NFQ::close() {/*{{{*/
         nfq_destroy_queue(qh);
         nfq_close(h);
