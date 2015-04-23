@@ -86,11 +86,14 @@ namespace aitf {
         struct iphdr *ip_info = NULL;
         struct udphdr *udp_info = NULL;
         Flow flow;
+        // Get IP header and data payload
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
+                // Attempt to extract the RR
                 Flow *flow = nf->extract_rr(payload);
-                if (flow) {
+                // If one is not present
+                if (flow == nullptr) {
                     // The addition here strips off the IP header
                     if (ip_info->protocol == IPPROTO_UDP) {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
@@ -102,16 +105,18 @@ namespace aitf {
         }
 
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
-            // TODO: Temporary packet created - should be pulled from TCP/UDP headers
             nf->handle_aitf_pkt(nullptr); // TODO: Need to figure out what to do with this
+        // If a flow is present
         } else if (strcmp(flow.serialize(), "") != 0) {
             nf->update_rr_and_forward(ip_info, flow);
-        // If destination in my subnet and legacy, remove rr
+        // TODO: If destination in my subnet and legacy, remove rr
+        // Otherwise add route record and forward packet
         } else {
             nf->add_rr_and_forward(payload);
         }
 
         int accept = NF_ACCEPT;
+        // Check filtering tables for violations
         if (nf->check_filters()) {accept = NF_DROP;}
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
@@ -119,11 +124,16 @@ namespace aitf {
     void NFQ::handle_aitf_pkt(aitf::AITFPacket *pkt) {/*{{{*/
         AITFPacket resp;
         switch (pkt->get_mode()) {
+            // TODO: We may need another action definition since I do not currently see
+            // a way to differentiate between sending/receiving the CONF, which should be
+            // used to determine when to take an action on a filter request
             case AITF_HELO:
-                resp.set_values(AITF_CONF, pkt->get_seq(), pkt->get_nonce());
+                // If received the first stage, send back sequence +1 and same nonce
+                resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_CONF:
-                resp.set_values(pkt->get_mode(), pkt->get_seq(), pkt->get_nonce());
+                // If received the second stage, send back sequence +1 and same nonce
+                resp.set_values(pkt->get_mode(), pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:
@@ -136,6 +146,8 @@ namespace aitf {
     }/*}}}*/
 
 Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
+    // Checks that the first 64 values are zero, which differentiates the
+    // shim layer from TCP/UDP or other protocols
     for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return nullptr;}
     // TODO: this needs to populate a Flow somehow
     return &(payload + sizeof(struct iphdr) + 64);
@@ -153,6 +165,7 @@ Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
         unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
         Flow f;
         // TODO: f.AddHop()
+        // Insert a flow in the middle of the IP header and the rest of the packet
         strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
         strncpy((char*)new_payload, f.serialize(), strlen(f.serialize()));
         strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
