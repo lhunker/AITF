@@ -1,7 +1,6 @@
 #ifndef __AITF_PROT_H
 #define __AITF_PROT_H
 
-
 #include <vector>
 #include <deque>
 
@@ -9,8 +8,6 @@ using std::vector;
 using std::deque;
 
 namespace aitf {
-    unsigned char* create_ustr(int l);
-
     // Network protocol modes
     #define AITF_HELO 0
     #define AITF_CONF 1
@@ -22,7 +19,9 @@ namespace aitf {
             void AddHop(int, int);
             const bool operator==(const Flow&);
            // Used to make a string for storing
-            char* serialize();
+            char* Serialize();
+            // Used to create a Flow from a string
+            void Populate(unsigned char*);
         private:
             deque<int> ips;
             deque<int> hashes;

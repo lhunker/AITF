@@ -6,14 +6,11 @@
 
 #include "aitf_nf.h"
 #include "aitf_prot.h"
+#include "common.h"
 
+// TODO: the +64s aren't accounting for the size field of the AITF layer
+// Perhaps strip that out and set the size statically?
 namespace aitf {
-    char* create_str(int l) {/*{{{*/
-        char *s = (char*)malloc(sizeof(char) * (l + 1));
-        memset(s, '\0', l + 1);
-        return s;
-    }/*}}}*/
-
     NFQ::NFQ() {/*{{{*/
         // Get all of my IP addresses
         struct ifaddrs *ifaddr, *ifa;
@@ -107,7 +104,7 @@ namespace aitf {
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             nf->handle_aitf_pkt(nullptr); // TODO: Need to figure out what to do with this
         // If a flow is present
-        } else if (strcmp(flow.serialize(), "") != 0) {
+        } else if (strcmp(flow.Serialize(), "") != 0) {
             nf->update_rr_and_forward(ip_info, flow);
         // TODO: If destination in my subnet and legacy, remove rr
         // Otherwise add route record and forward packet
@@ -149,8 +146,9 @@ Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
     // Checks that the first 64 values are zero, which differentiates the
     // shim layer from TCP/UDP or other protocols
     for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return nullptr;}
-    // TODO: this needs to populate a Flow somehow
-    return &(payload + sizeof(struct iphdr) + 64);
+    Flow f;
+    f.Populate(payload + sizeof(struct iphdr) + 64);
+    return &f;
 }/*}}}*/
 
     /* TODO:
@@ -167,7 +165,7 @@ Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
         // TODO: f.AddHop()
         // Insert a flow in the middle of the IP header and the rest of the packet
         strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-        strncpy((char*)new_payload, f.serialize(), strlen(f.serialize()));
+        strncpy((char*)new_payload, f.Serialize(), strlen(f.Serialize()));
         strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
         // TODO: swap for existing packet
     }/*}}}*/

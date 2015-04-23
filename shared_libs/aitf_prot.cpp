@@ -2,15 +2,13 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <sstream>
 #include "aitf_prot.h"
+#include "common.h"
+
+using std::istringstream;
 
 namespace aitf {
-    unsigned char* create_ustr(int l) {/*{{{*/
-        unsigned char *s = (unsigned char*)malloc(sizeof(char) * (l + 1));
-        memset(s, '\0', l + 1);
-        return s;
-    }/*}}}*/
-
     Flow::Flow() {/*{{{*/
     }/*}}}*/
 
@@ -25,6 +23,31 @@ namespace aitf {
     const bool Flow::operator==(const Flow &f) {/*{{{*/
         for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i) || hashes.at(i) != f.hashes.at(i)) {return false;}}
         return true;
+    }/*}}}*/
+
+    void Flow::Populate(unsigned char *data) {/*{{{*/
+        // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
+        // Doubled to get IP/hash pair
+        char *ip = create_str(8);
+        char *hash = create_str(8);
+        for (int n = 0; n < 32; n += 16) {
+            strncpy(ip, (char*)data[n], 8);
+            strncpy(hash, (char*)data[n + 8], 8);
+            istringstream sp(ip);
+            int i;
+            sp >> i;
+            ips.push_back(i);
+            istringstream sh(hash);
+            int h;
+            sh >> h;
+            hashes.push_back(h);
+        }
+        free(ip);
+        free(hash);
+    }/*}}}*/
+
+    char* Flow::Serialize() {/*{{{*/
+        return ""; // TODO
     }/*}}}*/
 
     FlowPaths::FlowPaths() {/*{{{*/
