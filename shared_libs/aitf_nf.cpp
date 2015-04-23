@@ -107,41 +107,13 @@ namespace aitf {
             nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else if (strcmp(flow.Serialize(), "") != 0) {
-            nf->update_rr_and_forward(ip_info, flow);
-        // TODO: If destination in my subnet and legacy, remove rr
-        // Otherwise add route record and forward packet
-        } else {
-            nf->add_rr_and_forward(payload);
+            nf->update_rr(ip_info, flow);
         }
 
         int accept = NF_ACCEPT;
         // Check filtering tables for violations
         if (nf->check_filters()) {accept = NF_DROP;}
         return nfq_set_verdict(qh, id, accept, 0, NULL);
-    }/*}}}*/
-
-    void NFQ::handle_aitf_pkt(aitf::AITFPacket *pkt) {/*{{{*/
-        AITFPacket resp;
-        switch (pkt->get_mode()) {
-            // TODO: We may need another action definition since I do not currently see
-            // a way to differentiate between sending/receiving the CONF, which should be
-            // used to determine when to take an action on a filter request
-            case AITF_HELO:
-                // If received the first stage, send back sequence +1 and same nonce
-                resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
-                break;
-            case AITF_CONF:
-                // If received the second stage, send back sequence +1 and same nonce
-                resp.set_values(pkt->get_mode(), pkt->get_seq() + 1, pkt->get_nonce());
-                // TODO: Take action here
-                break;
-            case AITF_ACK:
-                // Request/action should have been taken
-                break;
-            default:
-                return;
-                break;
-        }
     }/*}}}*/
 
     Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
@@ -153,28 +125,16 @@ namespace aitf {
         return &f;
     }/*}}}*/
 
-    void NFQ::add_rr_and_forward(unsigned char *payload) {/*{{{*/
-        unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
-        Flow f;
+    //void NFQ::add_rr(unsigned char *payload) {/*{{{*/ - TODO This goes in derived classes or included files
+        //unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
+        //Flow f;
         // TODO: f.AddHop()
         // Insert a flow in the middle of the IP header and the rest of the packet
-        strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-        strncpy((char*)new_payload, f.Serialize(), strlen(f.Serialize()));
-        strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
+        //strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
+        //strncpy((char*)new_payload, f.Serialize(), strlen(f.Serialize()));
+        //strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
         // TODO: swap for existing packet
-    }/*}}}*/
-
-    void NFQ::remove_rr() {/*{{{*/
-        // TODO
-    }/*}}}*/
-
-    void NFQ::update_rr_and_forward(struct iphdr *iph, Flow flow) {/*{{{*/
-        // TODO: Outsource to client/server code following this logic - taken care of?
-        // If first hop from source, add
-        // If last hop to dest and legacy host, remove, otherwise leave intact
-        // If host, add to filter table
-        // Otherwise, update
-    }/*}}}*/
+    //}/*}}}*/
 
     void NFQ::loop() {/*{{{*/
         char buf[4096] __attribute__ ((aligned));
