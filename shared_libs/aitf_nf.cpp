@@ -90,7 +90,7 @@ namespace aitf {
                 // Attempt to extract the RR
                 Flow *flow = nf->extract_rr(payload);
                 // If one is not present
-                if (flow == nullptr) {
+                if (flow == NULL) {
                     // The addition here strips off the IP header
                     if (ip_info->protocol == IPPROTO_UDP) {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
@@ -102,7 +102,7 @@ namespace aitf {
         }
 
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
-            nf->handle_aitf_pkt(nullptr); // TODO: Need to figure out what to do with this
+            nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else if (strcmp(flow.Serialize(), "") != 0) {
             nf->update_rr_and_forward(ip_info, flow);
@@ -145,7 +145,7 @@ namespace aitf {
 Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
     // Checks that the first 64 values are zero, which differentiates the
     // shim layer from TCP/UDP or other protocols
-    for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return nullptr;}
+    for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
     Flow f;
     f.Populate(payload + sizeof(struct iphdr) + 64);
     return &f;
