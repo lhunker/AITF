@@ -16,7 +16,7 @@ namespace aitf {
     #define AITF_CONF 1
     #define AITF_ACK 2
 
-    class Flow {
+    class Flow {/*{{{*/
         public:
             Flow();
             void AddHop(int, int);
@@ -26,9 +26,9 @@ namespace aitf {
         private:
             deque<int> ips;
             deque<int> hashes;
-    };
+    };/*}}}*/
 
-    class FlowPaths {
+    class FlowPaths {/*{{{*/
         public:
             FlowPaths();
             void AddFlow(Flow);
@@ -39,9 +39,9 @@ namespace aitf {
             vector<int> pkt_times;
             void ResetCount(int);
 
-    };
+    };/*}}}*/
 
-    class AITFPacket {
+    class AITFPacket {/*{{{*/
         public:
            AITFPacket();
            AITFPacket(unsigned);
@@ -63,6 +63,6 @@ namespace aitf {
             void set_seq(unsigned);
             void set_nonce(char[16]);
             void set_nonce(unsigned char[16]);
-    };
+    };/*}}}*/
 }
 #endif

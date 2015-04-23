@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <ifaddrs.h>
 
 #include "aitf_nf.h"
 #include "aitf_prot.h"
@@ -12,8 +14,26 @@ namespace aitf {
         return s;
     }/*}}}*/
 
-    // TODO: NFQ class should have a variable containing my IP addresses - see http://man7.org/linux/man-pages/man3/getifaddrs.3.html
     NFQ::NFQ() {/*{{{*/
+        // Get all of my IP addresses
+        struct ifaddrs *ifaddr, *ifa;
+
+        if (getifaddrs(&ifaddr) == -1) {
+            perror("getifaddrs");
+            exit(EXIT_FAILURE);
+        }
+
+        int n = 0;
+        for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+            if (ifa->ifa_addr == NULL)
+                continue;
+
+            char *ip = create_str(4 * 4); // Length of IP address + 1
+            ip = inet_ntoa(((struct sockaddr_in*)ifa->ifa_addr)->sin_addr);
+            ips[n] = ip;
+            n++;
+        }
+
         // Open library handle
         h = nfq_open();
         if (!h) {
@@ -115,11 +135,11 @@ namespace aitf {
         }
     }/*}}}*/
 
-Flow* NFQ::extract_rr(unsigned char* payload) {
+Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
     for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return nullptr;}
     // TODO: this needs to populate a Flow somehow
     return &(payload + sizeof(struct iphdr) + 64);
-}
+}/*}}}*/
 
     /* TODO:
       * Okay, so the RR stuff (after talking to the guys here at NetOps)

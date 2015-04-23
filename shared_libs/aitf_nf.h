@@ -16,6 +16,8 @@
 
 #include "aitf_prot.h"
 
+#define MAX_IPS 10
+
 // nullptr emulation
 class nullptr_t {/*{{{*/
   public:
@@ -35,7 +37,7 @@ namespace aitf {
     char* create_str(int);
 
     #define AITF_PORT 40
-    class NFQ {
+    class NFQ {/*{{{*/
         public:
             NFQ();
             void loop();
@@ -44,6 +46,7 @@ namespace aitf {
             struct nfq_handle *h;
             struct nfq_q_handle *qh;
             int fd;
+            char *ips[MAX_IPS];
             Flow* extract_rr(unsigned char*);
             void handle_aitf_pkt(AITFPacket*);
             void add_rr_and_forward(unsigned char*);
@@ -51,6 +54,6 @@ namespace aitf {
             void update_rr_and_forward(struct iphdr*, Flow);
             bool check_filters();
             static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);
-    };
+    };/*}}}*/
 };
 #endif
