@@ -96,7 +96,9 @@ namespace aitf {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
                     }
                 } else {
-                    // TODO: skip over flow and get header in case AITF packet with RR
+                    if (ip_info->protocol == IPPROTO_UDP) {
+                        udp_info = (struct udphdr*)(payload + sizeof(*ip_info) + 64 + sizeof(Flow));
+                    }
                 }
             }
         }
@@ -142,23 +144,15 @@ namespace aitf {
         }
     }/*}}}*/
 
-Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
-    // Checks that the first 64 values are zero, which differentiates the
-    // shim layer from TCP/UDP or other protocols
-    for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
-    Flow f;
-    f.Populate(payload + sizeof(struct iphdr) + 64);
-    return &f;
-}/*}}}*/
+    Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
+        // Checks that the first 64 values are zero, which differentiates the
+        // shim layer from TCP/UDP or other protocols
+        for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
+        Flow f;
+        f.Populate(payload + sizeof(struct iphdr) + 64);
+        return &f;
+    }/*}}}*/
 
-    /* TODO:
-      * Okay, so the RR stuff (after talking to the guys here at NetOps)
-      * should be inserted between the IP header and the TCP header.
-      * So it appears the tcp/udp stuff is a subset of the IP header, meaning
-      * we need to drop the existing ip header and recreate it using our
-      * custom AITFPacket class then append the tcp/udp header
-      * Other protocol support, maybe ICMP? Or do we just forward those straight on?
-    */
     void NFQ::add_rr_and_forward(unsigned char *payload) {/*{{{*/
         unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
         Flow f;
