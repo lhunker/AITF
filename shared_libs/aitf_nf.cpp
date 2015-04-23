@@ -131,7 +131,12 @@ Flow* NFQ::extract_rr(unsigned char* payload) {
     */
     void NFQ::add_rr_and_forward(unsigned char *payload) {/*{{{*/
         unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
-        // TODO: split old payload after iphdr, insert flow, append other data and then swap for existing packet
+        Flow f;
+        // TODO: f.AddHop()
+        strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
+        strncpy((char*)new_payload, f.serialize(), strlen(f.serialize()));
+        strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
+        // TODO: swap for existing packet
     }/*}}}*/
 
     void NFQ::remove_rr() {/*{{{*/

@@ -17,7 +17,7 @@
 #include "aitf_prot.h"
 
 // nullptr emulation
-class nullptr_t {
+class nullptr_t {/*{{{*/
   public:
     template<class T>
     inline operator T*() const // convertible to any type of null non-member pointer...
@@ -29,7 +29,7 @@ class nullptr_t {
 
   private:
     void operator&() const;  // Can't take address of nullptr
-} nullptr = {};
+} nullptr = {};/*}}}*/
 
 namespace aitf {
     char* create_str(int);
