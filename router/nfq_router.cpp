@@ -5,6 +5,7 @@
 #include "nfq_router.h"
 
 namespace aitf {
+    // Determine mode of AITF packet and respond, taking appropriate action
     void nfq_router::handle_aitf_pkt(AITFPacket *pkt) {/*{{{*/
         //TODO implement function
         AITFPacket resp;
@@ -27,9 +28,13 @@ namespace aitf {
             default:
                 return;
                 break;
+            
         }
+        // send response packet here
     }/*}}}*/
 
+    // Update route record layer as appropriate for network position
+    // and replace current packet in kernel
     void nfq_router::update_rr(unsigned char *payload, Flow *flow) {/*{{{*/
         //TODO implement function
         if (check_filters()) {
@@ -44,15 +49,15 @@ namespace aitf {
             strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
             // TODO: swap for existing packet
         // else if destination is in my domain 
-        // host doesn't support aitf, strip header
-        // else leave intact
+            // host doesn't support aitf, strip rr
+            // else leave intact and forward packet
         } else {
             // flow.AddHop(me)
         }
     }/*}}}*/
 
     /**
-     * Checks if packet is being filtered against
+     * Check if received packet violates a filter
      * @return true if packet should be dropped, false otherwise
      */
     bool nfq_router::check_filters() {/*{{{*/
