@@ -32,6 +32,9 @@ namespace aitf {
 
     void nfq_router::update_rr(unsigned char *payload, Flow *flow) {/*{{{*/
         //TODO implement function
+        if (check_filters()) {
+            //drop packet
+        }
         if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             // flow.AddHop
@@ -48,13 +51,14 @@ namespace aitf {
         }
     }/*}}}*/
 
+    /**
+     * Checks if packet is being filtered against
+     * @return true if packet should be dropped, false otherwise
+     */
     bool nfq_router::check_filters() {/*{{{*/
         //TODO implement
         return false;
     }/*}}}*/
 }
 
-int main(int argc, char *argv[]) {
-    aitf::nfq_router nfq;
-    nfq.loop();
-}
+

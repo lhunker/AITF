@@ -34,7 +34,7 @@ namespace aitf {
             Flow* extract_rr(unsigned char*);
 
             virtual void handle_aitf_pkt(AITFPacket *) = 0;  //pure virtual
-            virtual void update_rr(unsigned char *, Flow) = 0;
+        virtual void update_rr(unsigned char *, Flow *) = 0;
             virtual bool check_filters() = 0;
 
             static int process_packet(struct nfq_q_handle*, struct nfgenmsg*, struct nfq_data*, void*);

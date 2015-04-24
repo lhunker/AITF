@@ -75,13 +75,13 @@ namespace aitf {
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
         struct udphdr *udp_info = NULL;
-        Flow flow;
+        Flow *flow;
         // Get IP header and data payload
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
                 // Attempt to extract the RR
-                Flow *flow = nf->extract_rr(payload);
+                flow = nf->extract_rr(payload);
                 // If one is not present
                 if (flow == NULL) {
                     // The addition here strips off the IP header
@@ -99,7 +99,7 @@ namespace aitf {
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
-        } else if (strcmp(flow.Serialize(), "") != 0) {
+        } else if (strcmp(flow->Serialize(), "") != 0) {
             nf->update_rr(payload, flow);
         }
 
@@ -109,13 +109,19 @@ namespace aitf {
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 
+    /**
+     * TODO: Brett fill in purpose
+     * @param payload
+     * @return
+     * Note, returned flow must be deleted when finished
+     */
     Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
         // Checks that the first 64 values are zero, which differentiates the
         // shim layer from TCP/UDP or other protocols
         for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
-        Flow f;
-        f.Populate(payload + sizeof(struct iphdr) + 64);
-        return &f;
+        Flow *f = new Flow();
+        f->Populate(payload + sizeof(struct iphdr) + 64);
+        return f;
     }/*}}}*/
 
     void NFQ::loop() {/*{{{*/
@@ -133,4 +139,8 @@ namespace aitf {
         nfq_destroy_queue(qh);
         nfq_close(h);
     }/*}}}*/
+
+    void NFQ::close() {
+
+    }
 }

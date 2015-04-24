@@ -12,11 +12,20 @@
 namespace aitf {
     class nfq_router : public NFQ {
     public:
-        void update_rr(unsigned char *, Flow *);
-        void handle_aitf_pkt(AITFPacket *);
+        virtual void update_rr(unsigned char *, Flow *);
+
+        virtual void handle_aitf_pkt(AITFPacket *);
 
     private:
         bool check_filters();
+
+
+    };
+
+    //struct to hold information about a router's endhosts
+    struct endhost {
+        unsigned int ip;    //the host's ip address
+        bool legacy;    //true if the host is legacy
     };
 }
 
