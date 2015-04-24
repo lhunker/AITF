@@ -27,19 +27,6 @@ namespace aitf {
             deque<int> hashes;
     };/*}}}*/
 
-    class FlowPaths {/*{{{*/
-        public:
-            FlowPaths();
-            void add_flow(Flow);
-        private:
-            int timeout;
-            vector<Flow> route_ips;
-            vector<int> pkt_count;
-            vector<int> pkt_times;
-            void reset_count(int);
-
-    };/*}}}*/
-
     class AITFPacket {/*{{{*/
         public:
            AITFPacket();

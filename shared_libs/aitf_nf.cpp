@@ -113,7 +113,7 @@ namespace aitf {
 
         int accept = NF_ACCEPT;
         // Check filtering tables for violations
-        if (nf->check_filters()) {accept = NF_DROP;}
+        if (nf->packet_action()) {accept = NF_DROP;}
         return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 

@@ -64,52 +64,6 @@ namespace aitf {
         return ""; // TODO
     }/*}}}*/
 
-    FlowPaths::FlowPaths() {/*{{{*/
-        // This is a data structure wrapper, essentially
-        // Only needs to initialize variables
-        vector<Flow> route_ips(10);
-        vector<int> pkt_count(10);
-        vector<int> pkt_times(10);
-        timeout = 5; // TODO: actually set this
-    }/*}}}*/
-
-    /**
-     * Adds a given flow, or increments the packet count
-     * Also resets the packet count when appropriate
-     * @param flow
-     */
-    void FlowPaths::add_flow(Flow flow) {/*{{{*/
-        // Check if flow already exists in table
-        for (int i = 0; i < route_ips.size(); i++) {
-            // If yes, check that time hasn't expired and either reset
-            // or increment count
-            if (route_ips[i] == flow) {
-                if (pkt_times[i] + timeout < time(NULL)) {
-                    reset_count(i);
-                    return;
-                } else {
-                    pkt_count[i]++;
-                    // TODO: Check attack threshold here
-                    return;
-                }
-            }
-        }
-        // No resize is necessary as the vector library reallocates as necessary
-        route_ips.push_back(flow);
-        pkt_count.push_back(0);
-        pkt_times.push_back(time(NULL));
-    }/*}}}*/
-
-    /**
-     * Resets packet count for a given flow index
-     * @param flow
-     */
-    void FlowPaths::reset_count(int flow) {/*{{{*/
-        // Triggered upon packet reception, hence 1 instead of 0
-        pkt_count[flow] = 1;
-        pkt_times[flow] = time(NULL);
-    }/*}}}*/
-
     // Getters and setters/*{{{*/
     void AITFPacket::set_mode(unsigned m) {/*{{{*/
         m = m & 0xF;

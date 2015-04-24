@@ -4,9 +4,24 @@
 #include "../shared_libs/aitf_prot.h"
 #include "../shared_libs/aitf_nf.h"
 #include "../shared_libs/common.h"
+#include <vector>
+#include <time.h>
 
 namespace aitf {
-    class Server : public NFQ {
+    class FlowPaths {/*{{{*/
+        public:
+            FlowPaths();
+            void add_flow(Flow);
+            bool check_attack_threshold(Flow);
+        private:
+            int timeout;
+            vector<Flow> route_ips;
+            vector<int> pkt_count;
+            vector<int> pkt_times;
+            void reset_count(int);
+    };/*}}}*/
+
+    class Server : public NFQ {/*{{{*/
         public:
             Server();
             ~Server();
@@ -15,8 +30,8 @@ namespace aitf {
 
         private:
             FlowPaths *flows;
-            bool check_filters();
-    };
+            bool packet_action();
+    };/*}}}*/
 }
 
 #endif
