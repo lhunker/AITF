@@ -12,7 +12,12 @@ namespace aitf {
     Flow::Flow() {/*{{{*/
     }/*}}}*/
 
-    void Flow::AddHop(int ip, int hash) {/*{{{*/
+    /**
+     * Adds a hop to a given flow
+     * @param ip
+     * @param hash
+     */
+    void Flow::add_hop(int ip, int hash) {/*{{{*/
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
@@ -25,7 +30,11 @@ namespace aitf {
         return true;
     }/*}}}*/
 
-    void Flow::Populate(unsigned char *data) {/*{{{*/
+    /**
+     * Populates a flow based off of a continuous data string
+     * @param data
+     */
+    void Flow::populate(unsigned char *data) {/*{{{*/
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
         char *ip = create_str(8);
@@ -33,6 +42,7 @@ namespace aitf {
         for (int n = 0; n < 32; n += 16) {
             strncpy(ip, (char*)data[n], 8);
             strncpy(hash, (char*)data[n + 8], 8);
+            // Convert string version of integers to actual integers
             istringstream sp(ip);
             int i;
             sp >> i;
@@ -46,7 +56,11 @@ namespace aitf {
         free(hash);
     }/*}}}*/
 
-    char* Flow::Serialize() {/*{{{*/
+    /**
+     * Converts a flow into a continuous string
+     * @return the string
+     */
+    char* Flow::serialize() {/*{{{*/
         return ""; // TODO
     }/*}}}*/
 
@@ -59,14 +73,19 @@ namespace aitf {
         timeout = 5; // TODO: actually set this
     }/*}}}*/
 
-    void FlowPaths::AddFlow(Flow flow) {/*{{{*/
+    /**
+     * Adds a given flow, or increments the packet count
+     * Also resets the packet count when appropriate
+     * @param flow
+     */
+    void FlowPaths::add_flow(Flow flow) {/*{{{*/
         // Check if flow already exists in table
         for (int i = 0; i < route_ips.size(); i++) {
             // If yes, check that time hasn't expired and either reset
             // or increment count
             if (route_ips[i] == flow) {
                 if (pkt_times[i] + timeout < time(NULL)) {
-                    ResetCount(i);
+                    reset_count(i);
                     return;
                 } else {
                     pkt_count[i]++;
@@ -81,7 +100,11 @@ namespace aitf {
         pkt_times.push_back(time(NULL));
     }/*}}}*/
 
-    void FlowPaths::ResetCount(int flow) {/*{{{*/
+    /**
+     * Resets packet count for a given flow index
+     * @param flow
+     */
+    void FlowPaths::reset_count(int flow) {/*{{{*/
         // Triggered upon packet reception, hence 1 instead of 0
         pkt_count[flow] = 1;
         pkt_times[flow] = time(NULL);

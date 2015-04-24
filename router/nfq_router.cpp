@@ -14,7 +14,7 @@ namespace aitf {
 
     }
 
-/**
+    /**
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
@@ -83,7 +83,7 @@ namespace aitf {
         return false;
     }
 
-/**
+    /**
      * Check if received packet violates a filter
      * @return true if packet should be dropped, false otherwise
      */

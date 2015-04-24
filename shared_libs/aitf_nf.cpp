@@ -62,6 +62,14 @@ namespace aitf {
         nfq_set_queue_maxlen(qh, 3200);
     }/*}}}*/
 
+    /**
+     * Processes packets received by NFQUEUE
+     * @param qh
+     * @param nfmsg
+     * @param nf_data
+     * @param data
+     * @return integer from nfq_set_verdict on whether to accept a packet
+     */
     int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {/*{{{*/
         NFQ *nf = (NFQ*)data;
         struct nfqnl_msg_packet_hdr *ph;
@@ -110,10 +118,9 @@ namespace aitf {
     }/*}}}*/
 
     /**
-     * TODO: Brett fill in purpose
+     * Extracts flow from packet contents
      * @param payload
-     * @return
-     * Note, returned flow must be deleted when finished
+     * @return flow contained in packet, or NULL if none
      */
     Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
         // Checks that the first 64 values are zero, which differentiates the
@@ -124,6 +131,9 @@ namespace aitf {
         return f;
     }/*}}}*/
 
+    /**
+     * Main loop in which packeets sent to NFQUEUE are handled
+     */
     void NFQ::loop() {/*{{{*/
         char buf[4096] __attribute__ ((aligned));
         int read_count;
