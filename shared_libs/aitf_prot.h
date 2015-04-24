@@ -16,12 +16,12 @@ namespace aitf {
     class Flow {/*{{{*/
         public:
             Flow();
-            void AddHop(int, int);
+            void add_hop(int, int);
             const bool operator==(const Flow&);
            // Used to make a string for storing
-            char* Serialize();
+            char* serialize();
             // Used to create a Flow from a string
-            void Populate(unsigned char*);
+            void populate(unsigned char*);
         private:
             deque<int> ips;
             deque<int> hashes;
@@ -30,13 +30,13 @@ namespace aitf {
     class FlowPaths {/*{{{*/
         public:
             FlowPaths();
-            void AddFlow(Flow);
+            void add_flow(Flow);
         private:
             int timeout;
             vector<Flow> route_ips;
             vector<int> pkt_count;
             vector<int> pkt_times;
-            void ResetCount(int);
+            void reset_count(int);
 
     };/*}}}*/
 

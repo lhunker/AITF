@@ -107,7 +107,7 @@ namespace aitf {
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
-        } else if (strcmp(flow->Serialize(), "") != 0) {
+        } else if (strcmp(flow->serialize(), "") != 0) {
             nf->update_rr(payload, flow);
         }
 
@@ -127,7 +127,7 @@ namespace aitf {
         // shim layer from TCP/UDP or other protocols
         for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
         Flow *f = new Flow();
-        f->Populate(payload + sizeof(struct iphdr) + 64);
+        f->populate(payload + sizeof(struct iphdr) + 64);
         return f;
     }/*}}}*/
 
