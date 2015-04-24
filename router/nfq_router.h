@@ -12,12 +12,17 @@
 namespace aitf {
     class nfq_router : public NFQ {
     public:
+        nfq_router();
+
+        ~nfq_router();
         virtual void update_rr(unsigned char *, Flow *);
 
         virtual void handle_aitf_pkt(AITFPacket *);
 
     private:
         bool check_filters();
+
+        bool to_legacy_host();
 
 
     };
