@@ -7,13 +7,12 @@
 
 #include "../shared_libs/aitf_nf.h"
 #include "../shared_libs/aitf_prot.h"
+#include "../shared_libs/common.h"
 
 namespace aitf {
     class nfq_router : public NFQ {
     public:
-
-        void update_rr(struct iphdr *, Flow);
-
+        void update_rr(unsigned char *, Flow *);
         void handle_aitf_pkt(AITFPacket *);
 
     private:

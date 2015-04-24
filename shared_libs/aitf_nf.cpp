@@ -62,12 +62,6 @@ namespace aitf {
         nfq_set_queue_maxlen(qh, 3200);
     }/*}}}*/
 
-    bool NFQ::check_filters() {/*{{{*/
-        // TODO: write this
-        //Is this really common? if not change to pure virtual
-        return true;
-    }/*}}}*/
-
     int NFQ::process_packet(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *nf_data, void *data) {/*{{{*/
         NFQ *nf = (NFQ*)data;
         struct nfqnl_msg_packet_hdr *ph;
@@ -106,7 +100,7 @@ namespace aitf {
             nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else if (strcmp(flow.Serialize(), "") != 0) {
-            nf->update_rr(ip_info, flow);
+            nf->update_rr(payload, flow);
         }
 
         int accept = NF_ACCEPT;
@@ -124,17 +118,6 @@ namespace aitf {
         return &f;
     }/*}}}*/
 
-    //void NFQ::add_rr(unsigned char *payload) {/*{{{*/ - TODO This goes in derived classes or included files
-        //unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(AITFPacket));
-        //Flow f;
-        // TODO: f.AddHop()
-        // Insert a flow in the middle of the IP header and the rest of the packet
-        //strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-        //strncpy((char*)new_payload, f.Serialize(), strlen(f.Serialize()));
-        //strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
-        // TODO: swap for existing packet
-    //}/*}}}*/
-
     void NFQ::loop() {/*{{{*/
         char buf[4096] __attribute__ ((aligned));
         int read_count;
@@ -146,8 +129,7 @@ namespace aitf {
     }/*}}}*/
 
 
-    //TODO should really be in destructor
-    void NFQ::close() {/*{{{*/
+    NFQ::~NFQ() {/*{{{*/
         nfq_destroy_queue(qh);
         nfq_close(h);
     }/*}}}*/
