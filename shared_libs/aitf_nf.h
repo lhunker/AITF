@@ -31,6 +31,7 @@ namespace aitf {
         struct nfq_handle *h;
         struct nfq_q_handle *qh;
         int fd;
+        int ips_long[MAX_IPS];
         char *ips[MAX_IPS];
     protected:
         Flow *extract_rr(unsigned char *);

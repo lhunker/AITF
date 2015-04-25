@@ -24,6 +24,7 @@ namespace aitf {
 
             char *ip = create_str(4 * 4); // Length of IP address + 1
             ip = inet_ntoa(((struct sockaddr_in*)ifa->ifa_addr)->sin_addr);
+            ips_long[n] = ((struct sockaddr_in*)ifa->ifa_addr)->sin_addr.s_addr;
             ips[n] = ip;
             n++;
         }

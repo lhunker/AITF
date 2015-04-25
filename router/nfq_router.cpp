@@ -55,7 +55,7 @@ namespace aitf {
         if (check_filters()) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             //drop packet
-        } else if (to_legacy_host(0)) {
+        } else if (to_legacy_host(0)) { // TODO: figure out IP address packet came in on
             extract_rr(payload);
         } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
