@@ -23,11 +23,8 @@ namespace aitf {
     class NFQ {/*{{{*/
     public:
         NFQ();
-
         ~NFQ();
-
         void loop();
-
         void close();
 
     private:
@@ -37,12 +34,8 @@ namespace aitf {
         char *ips[MAX_IPS];
     protected:
         Flow *extract_rr(unsigned char *);
-
-        virtual int handle_aitf_pkt(AITFPacket *) = 0;  //pure virtual
-        virtual int handlePacket(unsigned char *, Flow *) = 0;
-
-        virtual bool packet_action() = 0;
-
+        virtual int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *) = 0;  //pure virtual
+        virtual int handlePacket(struct nfq_q_handle*, int, unsigned char *, Flow *) = 0;
         static int process_packet(struct nfq_q_handle *, struct nfgenmsg *, struct nfq_data *, void *);
     };/*}}}*/
 };

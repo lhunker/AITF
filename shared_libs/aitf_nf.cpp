@@ -105,12 +105,11 @@ namespace aitf {
 
         //have subclass handle packet acceptance
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
-            return nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
+            return nf->handle_aitf_pkt(qh, id, NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else {
-            return nf->handlePacket(payload, flow);
+            return nf->handlePacket(qh, id, payload, flow);
         }
-
     }/*}}}*/
 
     /**

@@ -39,9 +39,10 @@ namespace aitf {
         // Doubled to get IP/hash pair
         char *ip = create_str(8);
         char *hash = create_str(8);
+        // Split string into 12 x 32 bit chunks and copy into newly-created string variables
         for (int n = 0; n < 32; n += 16) {
-            strncpy(ip, (char*)data[n], 8);
-            strncpy(hash, (char*)data[n + 8], 8);
+            strncpy(ip, (char*)&data[n], 8);
+            strncpy(hash, (char*)&data[n + 8], 8);
             // Convert string version of integers to actual integers
             istringstream sp(ip);
             int i;

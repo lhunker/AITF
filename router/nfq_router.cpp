@@ -18,7 +18,7 @@ namespace aitf {
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
-    int nfq_router::handle_aitf_pkt(AITFPacket *pkt) {/*{{{*/
+    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, AITFPacket *pkt) {/*{{{*/
         //TODO implement function
         AITFPacket resp;
         switch (pkt->get_mode()) {
@@ -38,9 +38,9 @@ namespace aitf {
                 // Request/action should have been taken
                 break;
             default:
-                return 1;
-            
+                return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
         }
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
         // send response packet here
     }/*}}}*/
 
@@ -50,19 +50,19 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    int nfq_router::handlePacket(unsigned char *payload, Flow *flow) {/*{{{*/
+    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
         //TODO implement function
         if (check_filters()) {
+            return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             //drop packet
         } else if (to_legacy_host()) {
             extract_rr(payload);
-        }
-        else if (flow == NULL) {
+        } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             // flow.AddHop
             // Insert a flow in the middle of the IP header and the rest of the packet
             strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-            strncpy((char*)new_payload, flow->Serialize(), strlen(flow->Serialize()));
+            strncpy((char*)new_payload, flow->serialize(), strlen(flow->serialize()));
             strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
             // TODO: swap for existing packet
         // else if destination is in my domain 
@@ -71,6 +71,7 @@ namespace aitf {
         } else {
             // flow.AddHop(me)
         }
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 
     /**

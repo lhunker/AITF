@@ -9,8 +9,9 @@ namespace aitf {
         delete flows;
     }/*}}}*/
 
-    void Server::handle_aitf_pkt(AITFPacket *pkt) {/*{{{*/
+    int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 
     /**
@@ -18,7 +19,7 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    void Server::update_rr(unsigned char *payload, Flow *flow) {/*{{{*/
+    int Server::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
         if (flows->check_attack_threshold(*flow)) {
             // TODO: initiate filter request
         } else {
@@ -28,15 +29,7 @@ namespace aitf {
             strcpy((char*)new_payload, (char*)payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
             // TODO: reinsert new_payload as packet
         }
-    }/*}}}*/
-
-    /**
-     * Determines logical negation if packet should be forwarded
-     * @return false since always going to forward packet
-     */
-    bool Server::packet_action() {/*{{{*/
-        // Since at an end host, always accept packet
-        return AITF_ACCEPT_PACKET;
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 
     FlowPaths::FlowPaths() {/*{{{*/

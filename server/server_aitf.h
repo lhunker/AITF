@@ -25,12 +25,11 @@ namespace aitf {
         public:
             Server();
             ~Server();
-            void handle_aitf_pkt(AITFPacket *);
-            void update_rr(unsigned char *, Flow *);
+            int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *);
+            int handlePacket(struct nfq_q_handle*, int, unsigned char *, Flow *);
 
         private:
             FlowPaths *flows;
-            bool packet_action();
     };/*}}}*/
 }
 
