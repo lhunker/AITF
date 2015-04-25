@@ -7,6 +7,9 @@
 #include <vector>
 #include <time.h>
 
+#define PKT_THRESHOLD 5
+#define PKT_TIMEOUT .5
+
 namespace aitf {
     class FlowPaths {/*{{{*/
         public:

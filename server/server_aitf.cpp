@@ -20,10 +20,10 @@ namespace aitf {
      * @param flow
      */
     int Server::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
+        flows->add_flow(*flow);
         if (flows->check_attack_threshold(*flow)) {
-            // TODO: initiate filter request
+            // TODO: send filter request
         } else {
-            flows->add_flow(*flow);
             unsigned char *new_payload = create_ustr(strlen((char*)payload) - 64 - sizeof(Flow));
             strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
             strcpy((char*)new_payload, (char*)payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
@@ -38,7 +38,6 @@ namespace aitf {
         vector<Flow> route_ips(10);
         vector<int> pkt_count(10);
         vector<int> pkt_times(10);
-        timeout = 5; // TODO: actually set this
     }/*}}}*/
 
     /**
@@ -52,7 +51,7 @@ namespace aitf {
             // If yes, check that time hasn't expired and either reset
             // or increment count
             if (route_ips[i] == flow) {
-                if (pkt_times[i] + timeout < time(NULL)) {
+                if (pkt_times[i] + PKT_TIMEOUT < time(NULL)) {
                     reset_count(i);
                     return;
                 } else {
@@ -86,7 +85,8 @@ namespace aitf {
     bool FlowPaths::check_attack_threshold(Flow flow) {/*{{{*/
         for (int i = 0; i < route_ips.size(); i++) {
             if (route_ips[i] == flow) {
-                // TODO check threshold
+                if (pkt_count[i] > PKT_THRESHOLD)
+                    return true;
                 return false;
             }
         }

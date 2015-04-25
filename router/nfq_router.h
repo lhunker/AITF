@@ -12,6 +12,12 @@
 using std::vector;
 
 namespace aitf {
+    //struct to hold information about a router's endhosts
+    struct endhost {
+        int ip;    //the host's ip address
+        bool legacy;    //true if the host is legacy
+    } typedef endhost;
+
     class nfq_router : public NFQ {
     public:
         nfq_router(vector<endhost> hostIn);
@@ -29,12 +35,6 @@ namespace aitf {
 
         vector<endhost> subnet;
 
-    };
-
-    //struct to hold information about a router's endhosts
-    struct endhost {
-        int ip;    //the host's ip address
-        bool legacy;    //true if the host is legacy
     };
 }
 
