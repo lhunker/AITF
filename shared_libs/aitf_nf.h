@@ -38,8 +38,8 @@ namespace aitf {
     protected:
         Flow *extract_rr(unsigned char *);
 
-        virtual void handle_aitf_pkt(AITFPacket *) = 0;  //pure virtual
-        virtual void update_rr(unsigned char *, Flow *) = 0;
+        virtual int handle_aitf_pkt(AITFPacket *) = 0;  //pure virtual
+        virtual int handlePacket(unsigned char *, Flow *) = 0;
 
         virtual bool packet_action() = 0;
 

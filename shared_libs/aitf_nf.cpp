@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <string.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 
@@ -104,17 +103,14 @@ namespace aitf {
             }
         }
 
+        //have subclass handle packet acceptance
         if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
-            nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
+            return nf->handle_aitf_pkt(NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
-        } else if (strcmp(flow->serialize(), "") != 0) {
-            nf->update_rr(payload, flow);
+        } else {
+            return nf->handlePacket(payload, flow);
         }
 
-        int accept = NF_ACCEPT;
-        // Check filtering tables for violations
-        if (nf->packet_action()) {accept = NF_DROP;}
-        return nfq_set_verdict(qh, id, accept, 0, NULL);
     }/*}}}*/
 
     /**

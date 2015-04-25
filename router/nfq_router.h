@@ -15,9 +15,10 @@ namespace aitf {
         nfq_router();
 
         ~nfq_router();
-        virtual void update_rr(unsigned char *, Flow *);
 
-        virtual void handle_aitf_pkt(AITFPacket *);
+        virtual int handlePacket(unsigned char *, Flow *);
+
+        virtual int handle_aitf_pkt(AITFPacket *);
 
     private:
         bool check_filters();

@@ -18,7 +18,7 @@ namespace aitf {
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
-    void nfq_router::handle_aitf_pkt(AITFPacket *pkt) {/*{{{*/
+    int nfq_router::handle_aitf_pkt(AITFPacket *pkt) {/*{{{*/
         //TODO implement function
         AITFPacket resp;
         switch (pkt->get_mode()) {
@@ -38,8 +38,7 @@ namespace aitf {
                 // Request/action should have been taken
                 break;
             default:
-                return;
-                break;
+                return 1;
             
         }
         // send response packet here
@@ -51,7 +50,7 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    void nfq_router::update_rr(unsigned char *payload, Flow *flow) {/*{{{*/
+    int nfq_router::handlePacket(unsigned char *payload, Flow *flow) {/*{{{*/
         //TODO implement function
         if (check_filters()) {
             //drop packet
