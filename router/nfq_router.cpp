@@ -6,8 +6,8 @@
 
 namespace aitf {
 
-    nfq_router::nfq_router() {
-        //TODO setup endhost list
+    nfq_router::nfq_router(vector<endhost> hostIn) {
+        subnet = vector<endhost>(hostIn);
     }
 
     nfq_router::~nfq_router() {
@@ -55,7 +55,7 @@ namespace aitf {
         if (check_filters()) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             //drop packet
-        } else if (to_legacy_host()) {
+        } else if (to_legacy_host(0)) {
             extract_rr(payload);
         } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
@@ -76,10 +76,14 @@ namespace aitf {
 
     /**
      * Determines if the packet is being sent to one of the routers legacy hosts
-     * @return true if sent to legacy host, false otherwise
+     * @return true if sent to legacy host in subnet, false otherwise
      */
-    bool nfq_router::to_legacy_host() {
-        //TODO implement (probably needs a parameter)
+    bool nfq_router::to_legacy_host(int ipIn) {
+        for (int i = 0; i < subnet.size(); i++) {
+            if (subnet[i].ip == ipIn && subnet[i].legacy) {
+                return true;
+            }
+        }
         return false;
     }
 

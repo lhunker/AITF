@@ -9,10 +9,12 @@
 #include "../shared_libs/aitf_prot.h"
 #include "../shared_libs/common.h"
 
+using std::vector;
+
 namespace aitf {
     class nfq_router : public NFQ {
     public:
-        nfq_router();
+        nfq_router(vector<endhost> hostIn);
 
         ~nfq_router();
 
@@ -23,14 +25,15 @@ namespace aitf {
     private:
         bool check_filters();
 
-        bool to_legacy_host();
+        bool to_legacy_host(int ipIn);
 
+        vector<endhost> subnet;
 
     };
 
     //struct to hold information about a router's endhosts
     struct endhost {
-        unsigned int ip;    //the host's ip address
+        int ip;    //the host's ip address
         bool legacy;    //true if the host is legacy
     };
 }
