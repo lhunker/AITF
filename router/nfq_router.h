@@ -8,8 +8,15 @@
 #include "../shared_libs/aitf_nf.h"
 #include "../shared_libs/aitf_prot.h"
 #include "../shared_libs/common.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <time.h>
+#include <openssl/rand.h>
 
 using std::vector;
+
+#define HASH_TIMEOUT 600
 
 namespace aitf {
     //struct to hold information about a router's endhosts
@@ -29,9 +36,16 @@ namespace aitf {
         int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *);
 
     private:
+        unsigned char *hash;
+        unsigned char *old_hash;
+
+        void update_hash();
+
         bool check_filters();
 
         bool to_legacy_host(int ipIn);
+
+        bool to_aitf_host(int ipIn);
 
         vector<endhost> subnet;
 

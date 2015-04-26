@@ -16,7 +16,7 @@ namespace aitf {
     class Flow {/*{{{*/
         public:
             Flow();
-            void add_hop(int, int);
+            void add_hop(int, unsigned char[]);
             const bool operator==(const Flow&);
            // Used to make a string for storing
             char* serialize();
@@ -24,7 +24,7 @@ namespace aitf {
             void populate(unsigned char*);
         private:
             deque<int> ips;
-            deque<int> hashes;
+            deque<unsigned char*> hashes;
     };/*}}}*/
 
     class AITFPacket {/*{{{*/

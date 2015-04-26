@@ -17,7 +17,7 @@ namespace aitf {
      * @param ip
      * @param hash
      */
-    void Flow::add_hop(int ip, int hash) {/*{{{*/
+    void Flow::add_hop(int ip, unsigned char *hash) {/*{{{*/
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
@@ -38,20 +38,18 @@ namespace aitf {
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
         char *ip = create_str(8);
-        char *hash = create_str(8);
+        unsigned char *hash = create_ustr(8);
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
         for (int n = 0; n < 32; n += 16) {
-            strncpy(ip, (char*)&data[n], 8);
-            strncpy(hash, (char*)&data[n + 8], 8);
             // Convert string version of integers to actual integers
+            strncpy(ip, (char*)&data[n], 8);
             istringstream sp(ip);
             int i;
             sp >> i;
             ips.push_back(i);
-            istringstream sh(hash);
-            int h;
-            sh >> h;
-            hashes.push_back(h);
+
+            strncpy((char*)hash, (char*)&data[n + 8], 8);
+            hashes.push_back(hash);
         }
         free(ip);
         free(hash);
@@ -111,7 +109,7 @@ namespace aitf {
 
         // Seed random generator and pick random sequence/nonce values
         srand(time(NULL));
-        set_seq(fmod(rand(), (pow(2, 8))));
+        set_seq(fmod(rand(), (pow(2, 16))));
         // Using openSSL for characters
         RAND_load_file("/dev/urandom", 1024);
         unsigned char *buf = create_ustr(16);
