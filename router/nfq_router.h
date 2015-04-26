@@ -37,11 +37,14 @@ namespace aitf {
 
     private:
         unsigned char *hash;
+
         unsigned char *old_hash;
+
+        vector< vector<int> > filters;
 
         void update_hash();
 
-        bool check_filters();
+        bool check_filters(Flow *);
 
         bool to_legacy_host(int ipIn);
 

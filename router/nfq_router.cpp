@@ -79,7 +79,7 @@ namespace aitf {
         fclose(ip_call);
         free(ip_cmd);
 
-        if (check_filters()) {
+        if (check_filters(flow)) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
         } else if (to_legacy_host(dest_ip)) {
             // TODO strip RR
@@ -129,8 +129,13 @@ namespace aitf {
      * Check if received packet violates a filter
      * @return true if packet should be dropped, false otherwise
      */
-    bool nfq_router::check_filters() {/*{{{*/
-        //TODO implement
+    bool nfq_router::check_filters(Flow *flow) {/*{{{*/
+        for (int i = 0; i < filters.size(); i++) {
+            for (int j = 0; j < flow->ips.size(); j++) {
+                if (flow->ips.at(j) != filters[i].at(j)) {break;}
+                return true;
+            }
+        }
         return false;
     }/*}}}*/
 }

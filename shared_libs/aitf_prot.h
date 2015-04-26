@@ -15,6 +15,8 @@ namespace aitf {
 
     class Flow {/*{{{*/
         public:
+            deque<int> ips;
+
             Flow();
             void add_hop(int, unsigned char[]);
             const bool operator==(const Flow&);
@@ -23,7 +25,6 @@ namespace aitf {
             // Used to create a Flow from a string
             void populate(unsigned char*);
         private:
-            deque<int> ips;
             deque<unsigned char*> hashes;
     };/*}}}*/
 
