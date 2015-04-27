@@ -48,8 +48,6 @@ namespace aitf {
 
         bool to_legacy_host(int ipIn);
 
-        bool to_aitf_host(int ipIn);
-
         vector<endhost> subnet;
 
     };

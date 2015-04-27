@@ -84,10 +84,12 @@ namespace aitf {
         struct iphdr *ip_info = NULL;
         struct udphdr *udp_info = NULL;
         Flow *flow;
+        int dest_port = -1;
         // Get IP header and data payload
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
+                //for (int i = 0; i < ip_info->tot_len; i++) printf("%c", payload[i]);
                 // Attempt to extract the RR
                 flow = nf->extract_rr(payload);
                 // If one is not present
@@ -95,17 +97,19 @@ namespace aitf {
                     // The addition here strips off the IP header
                     if (ip_info->protocol == IPPROTO_UDP) {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info));
+                        dest_port = ntohs(udp_info->dest);
                     }
                 } else {
                     if (ip_info->protocol == IPPROTO_UDP) {
                         udp_info = (struct udphdr*)(payload + sizeof(*ip_info) + 64 + sizeof(Flow));
+                        dest_port = ntohs(udp_info->dest);
                     }
                 }
             }
         }
 
         //have subclass handle packet acceptance
-        if ((udp_info && ntohs(udp_info->dest) == AITF_PORT)) { // TODO: Or destination address is one of my addresses
+        if ((udp_info != NULL && dest_port == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             return nf->handle_aitf_pkt(qh, id, NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else {
@@ -132,7 +136,7 @@ namespace aitf {
      * @param payload
      * @return Packet minus route record
      */
-    unsigned char* NFQ::strip_rr(unsigned char *payload) {
+    unsigned char* NFQ::strip_rr(unsigned char *payload) {/*{{{*/
         // If no RR data
         if (extract_rr(payload) == NULL) {return payload;}
         // Get new packet size, adding size of IP header to length of payload remaining after
@@ -142,7 +146,7 @@ namespace aitf {
         strncat((char*)new_payload, (char*)payload, sizeof(struct iphdr));
         strcat((char*)new_payload, (char*)&payload + sizeof(struct iphdr) + 64 + sizeof(Flow));
         return new_payload;
-    }
+    }/*}}}*/
 
     /**
      * Main loop in which packets sent to NFQUEUE are handled
@@ -163,7 +167,7 @@ namespace aitf {
         nfq_close(h);
     }/*}}}*/
 
-    void NFQ::close() {
+    void NFQ::close() {/*{{{*/
 
-    }
+    }/*}}}*/
 }

@@ -1,4 +1,5 @@
 #include <openssl/rand.h>
+#include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
@@ -10,6 +11,8 @@ using std::istringstream;
 
 namespace aitf {
     Flow::Flow() {/*{{{*/
+        ips = *(new deque<int>(6, 0));
+        hashes = *(new deque<unsigned char*>(6, NULL));
     }/*}}}*/
 
     /**
@@ -21,6 +24,7 @@ namespace aitf {
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
+        printf("%d-%s\n", ip, hash);
         ips.push_back(ip);
         hashes.push_back(hash);
     }/*}}}*/

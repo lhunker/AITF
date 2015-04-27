@@ -66,9 +66,16 @@ namespace aitf {
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
         // Get my IP address based on egress route
-        int dest_ip = ((struct iphdr*)payload)->daddr;
+        unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
+        unsigned char d_ip[4];
+        d_ip[0] = dest_ip & 0xFF;
+        d_ip[1] = (dest_ip >> 8) & 0xFF;
+        d_ip[2] = (dest_ip >> 16) & 0xFF;
+        d_ip[3] = (dest_ip >> 24) & 0xFF;
+        char *dest = create_str(15);
+        sprintf(dest, "%d.%d.%d.%d", d_ip[0], d_ip[1], d_ip[2], d_ip[3]);
         char *ip_cmd = create_str(150);
-        sprintf(ip_cmd, "ip route show to match %d | head -1 | grep -oE '([0-9]{,3}\\.){3}[0-9]' | tr -d '\\n'", dest_ip);
+        sprintf(ip_cmd, "ip route show to match %s | head -1 | grep -oE '([0-9]{,3}\\.){3}[0-9]' | tr -d '\\n'", dest);
         FILE *ip_call = popen(ip_cmd, "r");
         char *str_ip = create_str(15);
         fread(str_ip, 1, 15, ip_call);
@@ -86,17 +93,18 @@ namespace aitf {
         } else if (to_legacy_host(dest_ip)) {
             unsigned char *new_pkt = strip_rr(payload);
         // If going to an AITF host, add myself to list
-        } else if (to_aitf_host(dest_ip)) { //TODO shouldn't the gateway sign it still?
-            flow->add_hop(my_ip, hash);
-        // If no flow in packet at all, I am the first AITF gateway, so add RR
         } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             flow->add_hop(my_ip, hash);
+            printf("h\n");
             // Insert a flow in the middle of the IP header and the rest of the packet
             strncat((char *) new_payload, (char *) payload,
                     sizeof(struct iphdr));
+            printf("h\n");
             strcat((char*)new_payload, flow->serialize());
+            printf("h\n");
             strcat((char*)new_payload, (char*)payload + sizeof(struct iphdr));
+            printf("h\n");
         // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(my_ip, hash);
@@ -112,19 +120,6 @@ namespace aitf {
     bool nfq_router::to_legacy_host(int ipIn) {/*{{{*/
         for (int i = 0; i < subnet.size(); i++) {
             if (subnet[i].ip == ipIn && subnet[i].legacy) {
-                return true;
-            }
-        }
-        return false;
-    }/*}}}*/
-
-    /**
-     * Determines if the packet is being sent to one of the routers aitf hosts
-     * @return true if sent to aitf host in subnet, false otherwise
-     */
-    bool nfq_router::to_aitf_host(int ipIn) {/*{{{*/
-        for (int i = 0; i < subnet.size(); i++) {
-            if (subnet[i].ip == ipIn && !subnet[i].legacy) {
                 return true;
             }
         }
