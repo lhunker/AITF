@@ -93,10 +93,10 @@ namespace aitf {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             flow->add_hop(my_ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
-            strncpy((char *) new_payload, (char *) payload,
-                    sizeof(struct iphdr)); //May not work because we don't update header size?
-            strncpy((char*)new_payload, flow->serialize(), strlen(flow->serialize()));
-            strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
+            strncat((char *) new_payload, (char *) payload,
+                    sizeof(struct iphdr));
+            strcat((char*)new_payload, flow->serialize());
+            strcat((char*)new_payload, (char*)payload + sizeof(struct iphdr));
         // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(my_ip, hash);

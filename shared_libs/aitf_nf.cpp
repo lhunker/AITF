@@ -137,10 +137,10 @@ namespace aitf {
         if (extract_rr(payload) == NULL) {return payload;}
         // Get new packet size, adding size of IP header to length of payload remaining after
         // ip header and flow
-        int size = sizeof(struct iphdr) + strlen((char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
+        int size = sizeof(struct iphdr) + strlen((char*)payload + sizeof(struct iphdr) + 64 + sizeof(Flow));
         unsigned char *new_payload = create_ustr(size);
-        strncpy((char*)&new_payload, (char*)payload, sizeof(struct iphdr));
-        strncpy((char*)&new_payload[sizeof(struct iphdr)], (char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)], strlen((char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]));
+        strncat((char*)new_payload, (char*)payload, sizeof(struct iphdr));
+        strcat((char*)new_payload, (char*)&payload + sizeof(struct iphdr) + 64 + sizeof(Flow));
         return new_payload;
     }
 
