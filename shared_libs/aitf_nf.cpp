@@ -128,7 +128,7 @@ namespace aitf {
     }/*}}}*/
 
     /**
-     * Main loop in which packeets sent to NFQUEUE are handled
+     * Main loop in which packets sent to NFQUEUE are handled
      */
     void NFQ::loop() {/*{{{*/
         char buf[4096] __attribute__ ((aligned));

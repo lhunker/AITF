@@ -83,13 +83,14 @@ namespace aitf {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
         } else if (to_legacy_host(dest_ip)) {
             // TODO strip RR
-        } else if (to_aitf_host(dest_ip)) {
+        } else if (to_aitf_host(dest_ip)) { //TODO shouldn't the gateway sign it still?
             return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
         } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             flow->add_hop(my_ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
-            strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
+            strncpy((char *) new_payload, (char *) payload,
+                    sizeof(struct iphdr)); //May not work because we don't update header size?
             strncpy((char*)new_payload, flow->serialize(), strlen(flow->serialize()));
             strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
         } else {
