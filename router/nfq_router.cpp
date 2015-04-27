@@ -66,6 +66,7 @@ namespace aitf {
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
         // Get my IP address based on egress route
+        int16_t pkt_size = ((struct iphdr*)payload)->tot_len;
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
         unsigned char d_ip[4];
         d_ip[0] = dest_ip & 0xFF;
@@ -74,6 +75,7 @@ namespace aitf {
         d_ip[3] = (dest_ip >> 24) & 0xFF;
         char *dest = create_str(15);
         sprintf(dest, "%d.%d.%d.%d", d_ip[0], d_ip[1], d_ip[2], d_ip[3]);
+        printf("Dest: %s, %d\n", dest, pkt_size);
         char *ip_cmd = create_str(150);
         sprintf(ip_cmd, "ip route show to match %s | head -1 | grep -oE '([0-9]{,3}\\.){3}[0-9]' | tr -d '\\n'", dest);
         FILE *ip_call = popen(ip_cmd, "r");
@@ -94,17 +96,17 @@ namespace aitf {
             unsigned char *new_pkt = strip_rr(payload);
         // If going to an AITF host, add myself to list
         } else if (flow == NULL) {
-            unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
+            flow = new Flow();
+            unsigned char* new_payload = create_ustr(pkt_size + strlen(flow->serialize()) + 64);
             flow->add_hop(my_ip, hash);
-            printf("h\n");
             // Insert a flow in the middle of the IP header and the rest of the packet
-            strncat((char *) new_payload, (char *) payload,
-                    sizeof(struct iphdr));
-            printf("h\n");
+            for (int i = 0; i < sizeof(struct iphdr); i++) {new_payload[i] = payload[i];}
+            // TODO where should we add the 64 '0' characters?
             strcat((char*)new_payload, flow->serialize());
-            printf("h\n");
-            strcat((char*)new_payload, (char*)payload + sizeof(struct iphdr));
-            printf("h\n");
+            for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
+                //*(new_payload + i + strlen(flow->serialize())) = *(payload + i);
+                new_payload[i] = payload[i];
+            }
         // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(my_ip, hash);

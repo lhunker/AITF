@@ -3,6 +3,7 @@
 #include <math.h>
 #include <time.h>
 #include <string.h>
+#include <iostream>
 #include <sstream>
 #include "aitf_prot.h"
 #include "common.h"
@@ -24,7 +25,6 @@ namespace aitf {
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
-        printf("%d-%s\n", ip, hash);
         ips.push_back(ip);
         hashes.push_back(hash);
     }/*}}}*/
