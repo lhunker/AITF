@@ -85,10 +85,12 @@ namespace aitf {
         struct udphdr *udp_info = NULL;
         Flow *flow;
         int dest_port = -1;
+        int pkt_size = 0;
         // Get IP header and data payload
         if (nfq_get_payload(nf_data, &payload)) {
             ip_info = (struct iphdr*)data;
             if (ip_info) {
+                pkt_size = ip_info->tot_len;
                 //for (int i = 0; i < ip_info->tot_len; i++) printf("%c", payload[i]);
                 // Attempt to extract the RR
                 flow = nf->extract_rr(payload);
@@ -113,7 +115,7 @@ namespace aitf {
             return nf->handle_aitf_pkt(qh, id, NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else {
-            return nf->handlePacket(qh, id, payload, flow);
+            return nf->handlePacket(qh, id, pkt_size, payload, flow);
         }
     }/*}}}*/
 

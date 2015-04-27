@@ -31,7 +31,7 @@ namespace aitf {
 
         ~nfq_router();
 
-        int handlePacket(struct nfq_q_handle*, int, unsigned char *, Flow *);
+        int handlePacket(struct nfq_q_handle*, int, int, unsigned char *, Flow *);
 
         int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *);
 

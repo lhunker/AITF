@@ -64,9 +64,8 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
+    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
         // Get my IP address based on egress route
-        int16_t pkt_size = ((struct iphdr*)payload)->tot_len;
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
         unsigned char d_ip[4];
         d_ip[0] = dest_ip & 0xFF;
