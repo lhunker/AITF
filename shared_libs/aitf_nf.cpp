@@ -128,6 +128,23 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Returns the packet with RR data removed
+     * @param payload
+     * @return Packet minus route record
+     */
+    unsigned char* NFQ::strip_rr(unsigned char *payload) {
+        // If no RR data
+        if (extract_rr(payload) == NULL) {return payload;}
+        // Get new packet size, adding size of IP header to length of payload remaining after
+        // ip header and flow
+        int size = sizeof(struct iphdr) + strlen((char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
+        unsigned char *new_payload = create_ustr(size);
+        strncpy((char*)&new_payload, (char*)payload, sizeof(struct iphdr));
+        strncpy((char*)&new_payload[sizeof(struct iphdr)], (char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)], strlen((char*)&payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]));
+        return new_payload;
+    }
+
+    /**
      * Main loop in which packets sent to NFQUEUE are handled
      */
     void NFQ::loop() {/*{{{*/

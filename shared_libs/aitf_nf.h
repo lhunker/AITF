@@ -38,6 +38,7 @@ namespace aitf {
         virtual int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *) = 0;  //pure virtual
         virtual int handlePacket(struct nfq_q_handle*, int, unsigned char *, Flow *) = 0;
         static int process_packet(struct nfq_q_handle *, struct nfgenmsg *, struct nfq_data *, void *);
+        unsigned char* strip_rr(unsigned char *);
     };/*}}}*/
 };
 #endif

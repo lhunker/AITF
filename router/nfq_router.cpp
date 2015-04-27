@@ -79,12 +79,16 @@ namespace aitf {
         fclose(ip_call);
         free(ip_cmd);
 
+        // If in filters, drop it
         if (check_filters(flow)) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+        // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
-            // TODO strip RR
+            unsigned char *new_pkt = strip_rr(payload);
+        // If going to an AITF host, add myself to list
         } else if (to_aitf_host(dest_ip)) { //TODO shouldn't the gateway sign it still?
-            return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
+            flow->add_hop(my_ip, hash);
+        // If no flow in packet at all, I am the first AITF gateway, so add RR
         } else if (flow == NULL) {
             unsigned char* new_payload = create_ustr(strlen((char*)payload) + sizeof(Flow) + 64);
             flow->add_hop(my_ip, hash);
@@ -93,6 +97,7 @@ namespace aitf {
                     sizeof(struct iphdr)); //May not work because we don't update header size?
             strncpy((char*)new_payload, flow->serialize(), strlen(flow->serialize()));
             strncpy((char*)new_payload, (char*)payload + sizeof(struct iphdr), strlen((char*)payload + sizeof(struct iphdr)));
+        // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(my_ip, hash);
         }
