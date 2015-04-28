@@ -41,7 +41,21 @@ namespace aitf {
      * @param pkt_id
      * @return nfq set verdict result
      */
-    int nfq_router::clear_aitf_conn(struct nfq_q_handle *qh, int pkt_id) {/*{{{*/
+    int nfq_router::clear_aitf_conn(struct nfq_q_handle *qh, int pkt_id, unsigned int ip) {/*{{{*/
+        if (aitf_pkt_count.count(ip))
+            aitf_pkt_count[ip]++;
+        else {
+            aitf_pkt_count[ip] = 1;
+            aitf_pkt_time[ip] = time(NULL);
+        }
+
+        if (aitf_pkt_count[ip] > BLOCK_THRESH) {
+            aitf_block[ip] = 1;
+            aitf_block_time[ip] = time(NULL);
+        } else if ((time(NULL) - aitf_pkt_time[ip]) > BLOCK_THRESH_RESET) {
+            aitf_block[ip] = 0;
+            aitf_pkt_time[ip] = time(NULL);
+        }
         return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
     }/*}}}*/
 
@@ -49,8 +63,16 @@ namespace aitf {
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
-    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, AITFPacket *pkt) {/*{{{*/
-        //TODO implement function
+    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
+        if (aitf_block.count(ip)) {
+            // If this address has been blocked, drop packet
+            if (aitf_block[ip]) {
+                if ((time(NULL) - aitf_block_time[ip]) > BLOCK_TIMEOUT) aitf_block[ip] = 0;
+                else return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+            }
+        } else {
+            aitf_block[ip] = 0;
+        }
         AITFPacket resp;
         switch (pkt->get_mode()) {
             case AITF_HELO:
@@ -63,14 +85,14 @@ namespace aitf {
             case AITF_CONF:
                 // Validate sequence and nonce
                 if (seq_data[pkt_id] != (pkt->get_seq() - 1) || strcmp(nonce_data[pkt_id], pkt->get_nonce()) != 0)
-                    return clear_aitf_conn(qh, pkt_id);
+                    return clear_aitf_conn(qh, pkt_id, dest_ip);
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_ACT:
                 // Validate sequence and nonce
                 if (seq_data[pkt_id] != (pkt->get_seq() - 1) || strcmp(nonce_data[pkt_id], pkt->get_nonce()) != 0)
-                    return clear_aitf_conn(qh, pkt_id);
+                    return clear_aitf_conn(qh, pkt_id, dest_ip);
                 // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO: Take action here

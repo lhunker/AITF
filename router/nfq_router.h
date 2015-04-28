@@ -19,6 +19,9 @@ using std::vector;
 using std::map;
 
 #define HASH_TIMEOUT 600
+#define BLOCK_TIMEOUT 10
+#define BLOCK_THRESH 50
+#define BLOCK_THRESH_RESET 10
 
 namespace aitf {
     //struct to hold information about a router's endhosts
@@ -35,7 +38,7 @@ namespace aitf {
 
         int handlePacket(struct nfq_q_handle*, int, int, unsigned char *, Flow *);
 
-        int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *);
+        int handle_aitf_pkt(struct nfq_q_handle*, int, unsigned int, AITFPacket *);
 
     private:
         char *s_ip;
@@ -43,6 +46,11 @@ namespace aitf {
         char *hash;
 
         char *old_hash;
+
+        map<unsigned int,int> aitf_block;
+        map<unsigned int,int> aitf_block_time;
+        map<unsigned int,int> aitf_pkt_count;
+        map<unsigned int,int> aitf_pkt_time;
 
         map<int,int> seq_data;
         map<int,char*> nonce_data;
@@ -54,7 +62,7 @@ namespace aitf {
 
         bool to_legacy_host(int ipIn);
 
-        int clear_aitf_conn(struct nfq_q_handle*, int);
+        int clear_aitf_conn(struct nfq_q_handle*, int, unsigned int);
         unsigned char *update_pkt(unsigned char *old_payload, Flow *f, int pkt_size);
         vector<endhost> subnet;
 
