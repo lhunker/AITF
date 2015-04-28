@@ -38,9 +38,9 @@ namespace aitf {
     private:
         char *s_ip;
         int ip;
-        unsigned char *hash;
+        char *hash;
 
-        unsigned char *old_hash;
+        char *old_hash;
 
         vector< vector<int> > filters;
 

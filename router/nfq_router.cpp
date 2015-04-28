@@ -16,9 +16,9 @@ namespace aitf {
         subnet = vector<endhost>(hostIn);
 
         old_hash = NULL;
-        hash = create_ustr(32);
+        hash = create_str(32);
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes(hash, 32);
+        RAND_bytes((unsigned char*)hash, 8);
     }/*}}}*/
 
     nfq_router::~nfq_router() {/*{{{*/
@@ -32,7 +32,7 @@ namespace aitf {
     void nfq_router::update_hash() {/*{{{*/
         old_hash = hash;
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes(hash, 32);
+        RAND_bytes((unsigned char*)hash, 8);
     }/*}}}*/
 
     /**
@@ -43,26 +43,27 @@ namespace aitf {
         //TODO implement function
         AITFPacket resp;
         switch (pkt->get_mode()) {
-            // TODO: We may need another action definition since I do not currently see
-            // a way to differentiate between sending/receiving the CONF, which should be
-            // used to determine when to take an action on a filter request
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_CONF:
                 // If received the second stage, send back sequence +1 and same nonce
-                resp.set_values(pkt->get_mode(), pkt->get_seq() + 1, pkt->get_nonce());
+                resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
+                break;
+            case AITF_ACT:
+                resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
+                return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
                 break;
             default:
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
         }
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
-        // send response packet here
+        // TODO send resp packet
+        return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
     }/*}}}*/
 
     /**
@@ -72,7 +73,7 @@ namespace aitf {
      * @param pkt_size the size of the packet
      * @return the updated packet
      */
-    unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {
+    unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + 384 + 64);
         for (int i = 0; i < sizeof(struct iphdr); i++) { new_payload[i] = old_payload[i]; }
         // TODO where should we add the 64 '0' characters?
@@ -83,7 +84,7 @@ namespace aitf {
         }
         free(fs);
         return new_payload;
-    }
+    }/*}}}*/
 
 /**
      * Update route record layer as appropriate for network position
@@ -113,6 +114,7 @@ namespace aitf {
             free(tmp);
         }
         // TODO: swap for existing packet
+        free(new_pkt);
         return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 

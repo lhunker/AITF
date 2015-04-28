@@ -12,7 +12,11 @@ using std::istringstream;
 namespace aitf {
     Flow::Flow() {/*{{{*/
         ips = *(new deque<int>(6, 0));
-        hashes = *(new deque<unsigned char*>(6, NULL));
+        hashes = *(new deque<char*>(6));
+        for (int i = 0; i < 6; i++) {
+            hashes[i] = create_str(8);
+            strcpy(hashes[i], "00000000");
+        }
     }/*}}}*/
 
     /**
@@ -20,7 +24,7 @@ namespace aitf {
      * @param ip
      * @param hash
      */
-    void Flow::add_hop(int ip, unsigned char *hash) {/*{{{*/
+    void Flow::add_hop(int ip, char *hash) {/*{{{*/
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         if (ips[6] == 0) {
@@ -44,7 +48,7 @@ namespace aitf {
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
         char *ip = create_str(8);
-        unsigned char *hash = create_ustr(8);
+        char *hash = create_str(8);
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
         for (int n = 0; n < 32; n += 16) {
             // Convert string version of integers to actual integers

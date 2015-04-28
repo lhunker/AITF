@@ -11,7 +11,8 @@ namespace aitf {
     // Network protocol modes
     #define AITF_HELO 0
     #define AITF_CONF 1
-    #define AITF_ACK 2
+    #define AITF_ACT 2
+    #define AITF_ACK 3
 
     class Flow {/*{{{*/
         public:
@@ -19,14 +20,14 @@ namespace aitf {
 
             Flow();
 
-        void add_hop(int, unsigned char *);
+        void add_hop(int, char *);
             const bool operator==(const Flow&);
            // Used to make a string for storing
             char* serialize();
             // Used to create a Flow from a string
             void populate(unsigned char*);
         private:
-            deque<unsigned char*> hashes;
+            deque<char*> hashes;
     };/*}}}*/
 
     class AITFPacket {/*{{{*/
