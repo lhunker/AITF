@@ -1,7 +1,6 @@
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <math.h>
-#include <time.h>
 #include <string.h>
 #include <iostream>
 #include <sstream>
@@ -24,7 +23,10 @@ namespace aitf {
     void Flow::add_hop(int ip, unsigned char *hash) {/*{{{*/
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
-        if (ips.size() == 6) {ips.pop_front(); hashes.pop_front();}
+        if (ips[6] == 0) {
+            ips.pop_front();
+            hashes.pop_front();
+        }
         ips.push_back(ip);
         hashes.push_back(hash);
     }/*}}}*/
@@ -64,7 +66,13 @@ namespace aitf {
      * @return the string
      */
     char* Flow::serialize() {/*{{{*/
-        return ""; // TODO
+        char *out = create_str(384);
+        char *tmp = create_str(64);
+        for (int i = 0; i < 6; i++) {
+            sprintf(tmp, "%32d%s", ips[i], hashes[i]);
+            strncat(out, tmp, 65);
+        }
+        return out;
     }/*}}}*/
 
     // Getters and setters/*{{{*/
