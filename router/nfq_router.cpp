@@ -93,7 +93,6 @@ namespace aitf {
         // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             unsigned char *new_pkt = strip_rr(payload);
-        // If going to an AITF host, add myself to list
         } else if (flow == NULL) {
             flow = new Flow();
             unsigned char* new_payload = create_ustr(pkt_size + strlen(flow->serialize()) + 64);

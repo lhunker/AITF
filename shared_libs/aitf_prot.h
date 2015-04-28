@@ -18,7 +18,8 @@ namespace aitf {
             deque<int> ips;
 
             Flow();
-            void add_hop(int, unsigned char[]);
+
+        void add_hop(int, unsigned char *);
             const bool operator==(const Flow&);
            // Used to make a string for storing
             char* serialize();
