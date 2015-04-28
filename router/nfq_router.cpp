@@ -16,9 +16,9 @@ namespace aitf {
         subnet = vector<endhost>(hostIn);
 
         old_hash = NULL;
-        hash = create_ustr(64);
+        hash = create_ustr(32);
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes(hash, 64);
+        RAND_bytes(hash, 32);
     }/*}}}*/
 
     nfq_router::~nfq_router() {/*{{{*/
@@ -76,10 +76,12 @@ namespace aitf {
         unsigned char *new_payload = create_ustr(pkt_size + 384 + 64);
         for (int i = 0; i < sizeof(struct iphdr); i++) { new_payload[i] = old_payload[i]; }
         // TODO where should we add the 64 '0' characters?
-        strcat((char *) new_payload, f->serialize());
+        char *fs = f->serialize();
+        strcat((char *) new_payload, fs);
         for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
-            *(new_payload + i + strlen(f->serialize())) = *(old_payload + i);
+            *(new_payload + i + strlen(fs)) = *(old_payload + i);
         }
+        free(fs);
         return new_payload;
     }
 

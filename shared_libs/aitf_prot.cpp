@@ -130,6 +130,7 @@ namespace aitf {
         RAND_bytes(buf, 16);
         set_nonce(buf);
         Flow flow;
+        free(buf);
     }/*}}}*/
 
     // Used when responding to connections and the nonce and sequence
