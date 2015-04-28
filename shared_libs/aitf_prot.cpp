@@ -63,7 +63,8 @@ namespace aitf {
 
     /**
      * Converts a flow into a continuous string
-     * @return the string
+     * Pads all unused ips and hashes with 0s
+     * @return the string representation of the flow
      */
     char* Flow::serialize() {/*{{{*/
         char *out = create_str(384);
@@ -72,6 +73,7 @@ namespace aitf {
             sprintf(tmp, "%32d%s", ips[i], hashes[i]);
             strncat(out, tmp, 65);
         }
+        free(tmp);
         return out;
     }/*}}}*/
 
