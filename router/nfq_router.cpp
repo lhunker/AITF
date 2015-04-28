@@ -36,6 +36,16 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Removes sequence data and drops current packet
+     * @param qh
+     * @param pkt_id
+     * @return nfq set verdict result
+     */
+    int nfq_router::clear_aitf_conn(struct nfq_q_handle *qh, int pkt_id) {/*{{{*/
+        return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+    }/*}}}*/
+
+    /**
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
@@ -45,18 +55,33 @@ namespace aitf {
         switch (pkt->get_mode()) {
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
+                seq_data[pkt_id] = pkt->get_seq();
+                nonce_data[pkt_id] = create_str(8);
+                strcpy(nonce_data[pkt_id], pkt->get_nonce());
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_CONF:
+                // Validate sequence and nonce
+                if (seq_data[pkt_id] != (pkt->get_seq() - 1) || strcmp(nonce_data[pkt_id], pkt->get_nonce()) != 0)
+                    return clear_aitf_conn(qh, pkt_id);
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_ACT:
+                // Validate sequence and nonce
+                if (seq_data[pkt_id] != (pkt->get_seq() - 1) || strcmp(nonce_data[pkt_id], pkt->get_nonce()) != 0)
+                    return clear_aitf_conn(qh, pkt_id);
+                // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO: Take action here
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
+                // Don't need to verify since packet requires no action and
+                // can therefore be dropped regardless, so just remove entries
+                free(nonce_data[pkt_id]);
+                seq_data.erase(pkt_id);
+                nonce_data.erase(pkt_id);
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
                 break;
             default:

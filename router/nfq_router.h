@@ -13,8 +13,10 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <openssl/rand.h>
+#include <map>
 
 using std::vector;
+using std::map;
 
 #define HASH_TIMEOUT 600
 
@@ -42,6 +44,8 @@ namespace aitf {
 
         char *old_hash;
 
+        map<int,int> seq_data;
+        map<int,char*> nonce_data;
         vector< vector<int> > filters;
 
         void update_hash();
@@ -50,6 +54,7 @@ namespace aitf {
 
         bool to_legacy_host(int ipIn);
 
+        int clear_aitf_conn(struct nfq_q_handle*, int);
         unsigned char *update_pkt(unsigned char *old_payload, Flow *f, int pkt_size);
         vector<endhost> subnet;
 
