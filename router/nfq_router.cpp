@@ -66,6 +66,24 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Adds the flow to a packet
+     * @param old_payload the old packet
+     * @param f the flow to add
+     * @param pkt_size the size of the packet
+     * @return the updated packet
+     */
+    unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {
+        unsigned char *new_payload = create_ustr(pkt_size + 384 + 64);
+        for (int i = 0; i < sizeof(struct iphdr); i++) { new_payload[i] = old_payload[i]; }
+        // TODO where should we add the 64 '0' characters?
+        strcat((char *) new_payload, f->serialize());
+        for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
+            *(new_payload + i + strlen(f->serialize())) = *(old_payload + i);
+        }
+        return new_payload;
+    }
+
+/**
      * Update route record layer as appropriate for network position
      * and replace current packet in kernel
      * @param payload
@@ -73,28 +91,24 @@ namespace aitf {
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-
+        unsigned char *new_pkt;
         // If in filters, drop it
         if (check_filters(flow)) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
         // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
-            unsigned char *new_pkt = strip_rr(payload);
+            new_pkt = strip_rr(payload);
         } else if (flow == NULL) {
             flow = new Flow();
-            unsigned char* new_payload = create_ustr(pkt_size + strlen(flow->serialize()) + 64);
             flow->add_hop(ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
-            for (int i = 0; i < sizeof(struct iphdr); i++) {new_payload[i] = payload[i];}
-            // TODO where should we add the 64 '0' characters?
-            strcat((char*)new_payload, flow->serialize());
-            for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
-                //*(new_payload + i + strlen(flow->serialize())) = *(payload + i);
-                new_payload[i] = payload[i];
-            }
+            new_pkt = update_pkt(payload, flow, pkt_size);
         // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(ip, hash);
+            unsigned char *tmp = strip_rr(payload);
+            new_pkt = update_pkt(tmp, flow, pkt_size);
+            free(tmp);
         }
         // TODO: swap for existing packet
         return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);

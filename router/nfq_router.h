@@ -50,6 +50,7 @@ namespace aitf {
 
         bool to_legacy_host(int ipIn);
 
+        unsigned char *update_pkt(unsigned char *old_payload, Flow *f, int pkt_size);
         vector<endhost> subnet;
 
     };
