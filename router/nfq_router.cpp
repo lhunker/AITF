@@ -6,7 +6,13 @@
 
 namespace aitf {
 
-    nfq_router::nfq_router(vector<endhost> hostIn) {/*{{{*/
+    nfq_router::nfq_router(vector<endhost> hostIn, char *str_ip) {/*{{{*/
+        s_ip = create_str(15);
+        strcpy(s_ip, str_ip);
+        struct sockaddr_in s;
+        inet_aton(str_ip, &s.sin_addr);
+        ip = s.sin_addr.s_addr;
+
         subnet = vector<endhost>(hostIn);
 
         old_hash = NULL;
@@ -16,6 +22,7 @@ namespace aitf {
     }/*}}}*/
 
     nfq_router::~nfq_router() {/*{{{*/
+        free(s_ip);
         free(hash);
     }/*}}}*/
 
@@ -25,7 +32,7 @@ namespace aitf {
     void nfq_router::update_hash() {/*{{{*/
         old_hash = hash;
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes(hash, 64);
+        RAND_bytes(hash, 32);
     }/*}}}*/
 
     /**
@@ -65,27 +72,7 @@ namespace aitf {
      * @param flow
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
-        // Get my IP address based on egress route
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-        unsigned char d_ip[4];
-        d_ip[0] = dest_ip & 0xFF;
-        d_ip[1] = (dest_ip >> 8) & 0xFF;
-        d_ip[2] = (dest_ip >> 16) & 0xFF;
-        d_ip[3] = (dest_ip >> 24) & 0xFF;
-        char *dest = create_str(15);
-        sprintf(dest, "%d.%d.%d.%d", d_ip[0], d_ip[1], d_ip[2], d_ip[3]);
-        printf("Dest: %s, %d\n", dest, pkt_size);
-        char *ip_cmd = create_str(150);
-        sprintf(ip_cmd, "ip route show to match %s | head -1 | grep -oE '([0-9]{,3}\\.){3}[0-9]' | tr -d '\\n'", dest);
-        FILE *ip_call = popen(ip_cmd, "r");
-        char *str_ip = create_str(15);
-        fread(str_ip, 1, 15, ip_call);
-        struct sockaddr_in s;
-        inet_aton(str_ip, &s.sin_addr);
-        int my_ip = s.sin_addr.s_addr;
-
-        fclose(ip_call);
-        free(ip_cmd);
 
         // If in filters, drop it
         if (check_filters(flow)) {
@@ -96,7 +83,7 @@ namespace aitf {
         } else if (flow == NULL) {
             flow = new Flow();
             unsigned char* new_payload = create_ustr(pkt_size + strlen(flow->serialize()) + 64);
-            flow->add_hop(my_ip, hash);
+            flow->add_hop(ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
             for (int i = 0; i < sizeof(struct iphdr); i++) {new_payload[i] = payload[i];}
             // TODO where should we add the 64 '0' characters?
@@ -107,7 +94,7 @@ namespace aitf {
             }
         // Otherwise I am an intermediary router, so add myself as a hop
         } else {
-            flow->add_hop(my_ip, hash);
+            flow->add_hop(ip, hash);
         }
         // TODO: swap for existing packet
         return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);

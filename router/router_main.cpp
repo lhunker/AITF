@@ -5,7 +5,8 @@
 #include "nfq_router.h"
 
 int main(int argc, char *argv[]) {
-    aitf::nfq_router nfq(vector<aitf::endhost>(10));
+    if (argc < 2) {printf("Please provide an IP address!\n"); return 0;}
+    aitf::nfq_router nfq(vector<aitf::endhost>(10), argv[1]);
     nfq.loop();
 
     return 0;

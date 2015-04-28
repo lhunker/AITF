@@ -16,6 +16,7 @@
 
 #include "aitf_prot.h"
 
+#define BUF_SIZE 4096
 #define MAX_IPS 10
 
 namespace aitf {

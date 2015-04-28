@@ -27,7 +27,7 @@ namespace aitf {
 
     class nfq_router : public NFQ {
     public:
-        nfq_router(vector<endhost> hostIn);
+        nfq_router(vector<endhost> hostIn, char *);
 
         ~nfq_router();
 
@@ -36,6 +36,8 @@ namespace aitf {
         int handle_aitf_pkt(struct nfq_q_handle*, int, AITFPacket *);
 
     private:
+        char *s_ip;
+        int ip;
         unsigned char *hash;
 
         unsigned char *old_hash;

@@ -115,7 +115,7 @@ namespace aitf {
             return nf->handle_aitf_pkt(qh, id, NULL); // TODO: Need to figure out what to do with this
         // If a flow is present
         } else {
-            return nf->handlePacket(qh, id, pkt_size, payload, flow);
+            return nf->handlePacket(qh, id, BUF_SIZE, payload, flow);
         }
     }/*}}}*/
 
@@ -154,7 +154,7 @@ namespace aitf {
      * Main loop in which packets sent to NFQUEUE are handled
      */
     void NFQ::loop() {/*{{{*/
-        char buf[4096] __attribute__ ((aligned));
+        char buf[BUF_SIZE] __attribute__ ((aligned));
         int read_count;
 
         while ((read_count = recv(fd, buf, sizeof(buf), 0)) && read_count >= 0) {
