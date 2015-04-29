@@ -91,7 +91,7 @@ namespace aitf {
             if (ip_info) {
                 //for (int i = 0; i < ip_info->tot_len; i++) printf("%c", payload[i]);
                 // Attempt to extract the RR
-                if (nf->extract_rr(payload) != NULL) {
+                if (nf->extract_rr(payload) == NULL) {
 		            FILE *fp = fopen("caps/pre_extract", "w+");
 		            for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
 		            fclose(fp);

@@ -161,7 +161,7 @@ namespace aitf {
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size, bool pre) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + FLOW_SIZE + 8);
 
-        if (!pre) {
+        if (pre) {
             FILE *fp = fopen("caps/pre_mod", "w+");
             for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
             fclose(fp);
@@ -176,7 +176,7 @@ namespace aitf {
         memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
         ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
-        if (!pre) {
+        if (pre) {
             FILE *fp = fopen("caps/post_mod", "w+");
             for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
             fclose(fp);
@@ -199,7 +199,7 @@ namespace aitf {
         sprintf((char*)s_d, "%d\n", dest_ip);
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char*)s_d), NULL, NULL);
 
-        if (!pre) {
+        if (pre) {
             FILE *fp = fopen("caps/pre_handle", "w+");
             for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
             fclose(fp);

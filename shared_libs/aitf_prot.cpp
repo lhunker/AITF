@@ -15,7 +15,7 @@ namespace aitf {
         hashes = *(new deque<char*>(6));
         for (int i = 0; i < 6; i++) {
             hashes[i] = create_str(8);
-            strcpy(hashes[i], "00000000");
+            strcpy(hashes[i], "0000000000000000");
         }
     }/*}}}*/
 
@@ -58,7 +58,7 @@ namespace aitf {
             sp >> i;
             ips.push_back(i);
 
-            strncpy((char*)hash, (char*)data + n + 8, 16);
+            strncpy(hash, (char*)data + n + 8, 16);
             hashes.push_back(hash);
         }
         free(ip);
@@ -75,7 +75,7 @@ namespace aitf {
         char *tmp = create_str(24);
         for (int i = 0; i < 6; i++) {
             sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-            memcpy(out, tmp, 24);
+            memcpy(out + 24 * i, tmp, 24);
         }
         free(tmp);
         return out;
