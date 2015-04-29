@@ -10,17 +10,19 @@ namespace aitf {
     nfq_router::nfq_router(vector<endhost> hostIn, char *str_ip) {/*{{{*/
         s_ip = create_str(15);
         strcpy(s_ip, str_ip);
-	unsigned int c1,c2,c3,c4;
-	sscanf(s_ip, "%d.%d.%d.%d",&c1,&c2,&c3,&c4);
-	ip = (unsigned int)c4+c3*256+c2*256*256+c1*256*256*256;
+        unsigned int c1, c2, c3, c4;
+        sscanf(s_ip, "%d.%d.%d.%d", &c1, &c2, &c3, &c4);
+        ip = (unsigned int) c4 + c3 * 256 + c2 * 256 * 256 + c1 * 256 * 256 * 256;
 
         subnet = vector<endhost>(hostIn);
 
         old_hash = NULL;
         hash = create_str(32);
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes((unsigned char*)hash, 8);
-    }/*}}}*/
+        RAND_bytes((unsigned char *) hash, 8);
+    }
+
+    /*}}}*/
 
     nfq_router::~nfq_router() {/*{{{*/
         free(s_ip);
@@ -33,7 +35,7 @@ namespace aitf {
     void nfq_router::update_hash() {/*{{{*/
         old_hash = hash;
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes((unsigned char*)hash, 8);
+        RAND_bytes((unsigned char *) hash, 8);
     }/*}}}*/
 
     /**
@@ -66,7 +68,7 @@ namespace aitf {
      * @param ip the destination being bloack (or 0 if unknown)
      * @param pkt the aitf request packet from the victim
      */
-    AITFPacket nfq_router::send_request(unsigned int ip, AITFPacket *pkt) {
+    AITFPacket nfq_router::handle_victim_request(unsigned int ip, AITFPacket *pkt) {
         //TODO add local filter
         //TODO setup adding flow to packet
         unsigned short seq;
@@ -127,7 +129,7 @@ namespace aitf {
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             case AITF_REQ:
                 //Request from victim gateway
-                resp = send_request(dest_ip, pkt);
+                resp = handle_victim_request(dest_ip, pkt);
                 break;
             default:
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
@@ -145,18 +147,19 @@ namespace aitf {
      */
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + 96 + 8);
-	FILE *fp = fopen("cap", "w+");
-	for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
-	fclose(fp);
-	memcpy(new_payload, old_payload, sizeof(struct iphdr));
+        FILE *fp = fopen("cap", "w+");
+        for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
+        fclose(fp);
+        memcpy(new_payload, old_payload, sizeof(struct iphdr));
         char *fs = f->serialize();
-	for (int i = 0; i < 96; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
+        for (int i = 0; i < 96; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         free(fs);
-	memcpy(new_payload + sizeof(struct iphdr) + 96 + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
-	((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 96 + 8);
-	fp = fopen("cap2", "w+");
-	for (int i = 0; i < pkt_size + 104; i++) fputc(new_payload[i], fp);
-	fclose(fp);
+        memcpy(new_payload + sizeof(struct iphdr) + 96 + 8, old_payload + sizeof(struct iphdr),
+               pkt_size - sizeof(struct iphdr));
+        ((struct iphdr *) new_payload)->tot_len = htons(pkt_size + 96 + 8);
+        fp = fopen("cap2", "w+");
+        for (int i = 0; i < pkt_size + 104; i++) fputc(new_payload[i], fp);
+        fclose(fp);
         return new_payload;
     }/*}}}*/
 
@@ -166,15 +169,16 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
-        unsigned int src_ip = ((struct iphdr*)payload)->saddr;
-        unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-	printf("%d\n", ntohs(((struct iphdr*)payload)->tot_len));
+    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload,
+                                 Flow *flow) {/*{{{*/
+        unsigned int src_ip = ((struct iphdr *) payload)->saddr;
+        unsigned int dest_ip = ((struct iphdr *) payload)->daddr;
+        printf("%d\n", ntohs(((struct iphdr *) payload)->tot_len));
         unsigned char *new_pkt;
         // If in filters, drop it
         if (check_filters(flow)) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
-        // If going to legacy host, discard RR record
+            // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload);
         } else if (flow == NULL) {
@@ -182,18 +186,18 @@ namespace aitf {
             flow->add_hop(ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
             new_pkt = update_pkt(payload, flow, pkt_size);
-        // Otherwise I am an intermediary router, so add myself as a hop
+            // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(ip, hash);
             unsigned char *tmp = strip_rr(payload);
             new_pkt = update_pkt(tmp, flow, pkt_size);
             free(tmp);
         }
-	int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);
-	compute_ip_checksum((struct iphdr*)new_pkt);
-	FILE *fp = fopen("cap2", "w+");
-	for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
-	fclose(fp);
+        int np_size = ntohs(((struct iphdr *) new_pkt)->tot_len);
+        compute_ip_checksum((struct iphdr *) new_pkt);
+        FILE *fp = fopen("cap2", "w+");
+        for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
+        fclose(fp);
         return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, np_size, new_pkt);
     }/*}}}*/
 
@@ -217,7 +221,7 @@ namespace aitf {
     bool nfq_router::check_filters(Flow *flow) {/*{{{*/
         for (int i = 0; i < filters.size(); i++) {
             for (int j = 0; j < flow->ips.size(); j++) {
-                if (flow->ips.at(j) != filters[i].at(j)) {break;}
+                if (flow->ips.at(j) != filters[i].at(j)) { break; }
                 return true;
             }
         }
