@@ -31,16 +31,16 @@ namespace aitf {
     } typedef endhost;
 
     class nfq_router : public NFQ {
-    public:{{{
+    public:
         nfq_router(vector<endhost> hostIn, char *);
 
         ~nfq_router();
 
         int handlePacket(struct nfq_q_handle*, int, int, unsigned char *, Flow *);
 
-        int handle_aitf_pkt(struct nfq_q_handle*, int, unsigned int, AITFPacket *);}}}
+        int handle_aitf_pkt(struct nfq_q_handle *, int, unsigned int, AITFPacket *);
 
-    private:{{{
+    private:
         char *s_ip;
         int ip;
         char *hash;
@@ -66,7 +66,7 @@ namespace aitf {
         unsigned char *update_pkt(unsigned char *old_payload, Flow *f, int pkt_size);
         vector<endhost> subnet;
 
-    };}}}
+    };
 }
 
 #endif //AITF_NFQ_ROUTER_H

@@ -164,9 +164,7 @@ namespace aitf {
             new_pkt = update_pkt(tmp, flow, pkt_size);
             free(tmp);
         }
-        // TODO: swap for existing packet
-        free(new_pkt);
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, sizeof(new_pkt), new_pkt);
     }/*}}}*/
 
     /**
