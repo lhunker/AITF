@@ -117,7 +117,7 @@ namespace aitf {
                 // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO change compliance modes here
-                filters.push_back(pkt->get_flow());
+//                filters.push_back(pkt->get_flow());
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
@@ -176,7 +176,7 @@ namespace aitf {
         printf("%d\n", ntohs(((struct iphdr *) payload)->tot_len));
         unsigned char *new_pkt;
         // If in filters, drop it
-        if (check_filters(flow)) {
+        if (check_filters(flow, dest_ip, src_ip)) {
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
@@ -216,12 +216,14 @@ namespace aitf {
 
     /**
      * Check if received packet violates a filter
+     * @param flow the packet's flow or NULL if no flow
+     * @param dest the packet's destination
+     * @param src the packet's source
      * @return true if packet should be dropped, false otherwise
      */
-    bool nfq_router::check_filters(Flow *flow) {/*{{{*/
+    bool nfq_router::check_filters(Flow *flow, unsigned dest, unsigned src) {/*{{{*/
         for (int i = 0; i < filters.size(); i++) {
-            for (int j = 0; j < flow->ips.size(); j++) {
-                if (flow->ips.at(j) != filters[i].at(j)) { break; }
+            if (filters[i].trigger_filter(dest, src, flow)) {
                 return true;
             }
         }

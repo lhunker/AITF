@@ -7,6 +7,7 @@
 #include "../shared_libs/aitf_nf.h"
 #include "../shared_libs/aitf_prot.h"
 #include "../shared_libs/common.h"
+#include "filter_line.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -53,11 +54,11 @@ namespace aitf {
 
         map<int,int> seq_data;
         map<int,char*> nonce_data;
-        vector< vector<int> > filters;
+        vector<filter_line> filters;
 
         void update_hash();
 
-        bool check_filters(Flow *);
+        bool check_filters(Flow *f, unsigned dest, unsigned src);
 
         AITFPacket handle_victim_request(unsigned int, AITFPacket *);
 
