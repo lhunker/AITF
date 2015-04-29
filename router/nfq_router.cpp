@@ -158,12 +158,14 @@ namespace aitf {
      * @param pkt_size the size of the packet
      * @return the updated packet
      */
-    unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
+    unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size, bool pre) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + FLOW_SIZE + 8);
 
-        FILE *fp = fopen("cap", "w+");
-        for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
-        fclose(fp);
+        if (!pre) {
+            FILE *fp = fopen("caps/pre_mod", "w+");
+            for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
+            fclose(fp);
+        }
 
         memcpy(new_payload, old_payload, sizeof(struct iphdr));
 
@@ -174,9 +176,11 @@ namespace aitf {
         memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
         ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
-        fp = fopen("cap2", "w+");
-        for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
-        fclose(fp);
+        if (!pre) {
+            FILE *fp = fopen("caps/post_mod", "w+");
+            for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
+            fclose(fp);
+        }
 
         return new_payload;
     }/*}}}*/
@@ -188,11 +192,18 @@ namespace aitf {
      * @param flow
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
+        bool pre = (flow == NULL);
         unsigned int src_ip = ((struct iphdr*)payload)->saddr;
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
         unsigned char *s_d = create_ustr(15);
         sprintf((char*)s_d, "%d\n", dest_ip);
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char*)s_d), NULL, NULL);
+
+        if (!pre) {
+            FILE *fp = fopen("caps/pre_handle", "w+");
+            for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
+            fclose(fp);
+        }
 
         unsigned char *new_pkt;
         // If in filters, drop it
@@ -200,25 +211,27 @@ namespace aitf {
             return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
-            new_pkt = strip_rr(payload);
+            new_pkt = strip_rr(payload, pkt_size);
         } else if (flow == NULL) {
             flow = new Flow();
             flow->add_hop(ip, (char*)hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
-            new_pkt = update_pkt(payload, flow, pkt_size);
+            new_pkt = update_pkt(payload, flow, pkt_size, pre);
             // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(ip, (char*)hash);
-            unsigned char *tmp = strip_rr(payload);
-            new_pkt = update_pkt(tmp, flow, pkt_size);
+            unsigned char *tmp = strip_rr(payload, pkt_size);
+            new_pkt = update_pkt(tmp, flow, pkt_size, pre);
             free(tmp);
         }
         int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);
         compute_ip_checksum((struct iphdr*)new_pkt);
 
-        FILE *fp = fopen("cap2", "w+");
-        for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
-        fclose(fp);
+        if (!pre) {
+            FILE *fp = fopen("caps/post_handle", "w+");
+            for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
+            fclose(fp);
+        }
 
         return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
     }/*}}}*/

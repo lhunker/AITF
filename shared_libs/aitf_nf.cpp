@@ -91,7 +91,14 @@ namespace aitf {
             if (ip_info) {
                 //for (int i = 0; i < ip_info->tot_len; i++) printf("%c", payload[i]);
                 // Attempt to extract the RR
+                if (nf->extract_rr(payload) != NULL) {
+		            FILE *fp = fopen("caps/pre_extract", "w+");
+		            for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
+		            fclose(fp);
+                }
+
                 flow = nf->extract_rr(payload);
+		        printf("%d\n", flow == NULL);
                 // If one is not present
                 if (flow == NULL) {
                     // The addition here strips off the IP header
@@ -137,15 +144,14 @@ namespace aitf {
      * @param payload
      * @return Packet minus route record
      */
-    unsigned char* NFQ::strip_rr(unsigned char *payload) {/*{{{*/
+    unsigned char* NFQ::strip_rr(unsigned char *payload, int pkt_size) {/*{{{*/
         // If no RR data
         if (extract_rr(payload) == NULL) {return payload;}
         // Get new packet size, adding size of IP header to length of payload remaining after
         // ip header and flow
-        int size = sizeof(struct iphdr) + strlen((char*)payload + sizeof(struct iphdr) + 8 + sizeof(Flow));
-        unsigned char *new_payload = create_ustr(size);
-        strncat((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-        strcat((char*)new_payload, (char*)&payload + sizeof(struct iphdr) + 8 + sizeof(Flow));
+        unsigned char *new_payload = create_ustr(pkt_size - FLOW_SIZE - 8);
+        memcpy(new_payload, payload, sizeof(struct iphdr));
+        memcpy(new_payload + sizeof(struct iphdr), payload + sizeof(struct iphdr) + FLOW_SIZE + 8, pkt_size - sizeof(struct iphdr) - FLOW_SIZE - 8);
         return new_payload;
     }/*}}}*/
 

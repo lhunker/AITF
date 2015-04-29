@@ -52,13 +52,13 @@ namespace aitf {
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
         for (int n = 0; n < 32; n += 24) {
             // Convert string version of integers to actual integers
-            strncpy(ip, (char*)&data[n], 8);
+            strncpy(ip, (char*)data + n, 8);
             istringstream sp(ip);
             int i;
             sp >> i;
             ips.push_back(i);
 
-            strncpy((char*)hash, (char*)&data[n + 8], 16);
+            strncpy((char*)hash, (char*)data + n + 8, 16);
             hashes.push_back(hash);
         }
         free(ip);
