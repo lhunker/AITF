@@ -101,7 +101,7 @@ namespace aitf {
                     }
                 } else {
                     if (ip_info->protocol == IPPROTO_UDP) {
-                        udp_info = (struct udphdr*)(payload + sizeof(*ip_info) + 64 + sizeof(Flow));
+                        udp_info = (struct udphdr*)(payload + sizeof(*ip_info) + 8 + sizeof(Flow));
                         dest_port = ntohs(udp_info->dest);
                     }
                 }
@@ -124,11 +124,11 @@ namespace aitf {
      * @return flow contained in packet, or NULL if none
      */
     Flow* NFQ::extract_rr(unsigned char* payload) {/*{{{*/
-        // Checks that the first 64 values are zero, which differentiates the
+        // Checks that the first 8 characters are zero, which differentiates the
         // shim layer from TCP/UDP or other protocols
-        for (int i = 0; i < 64; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
+        for (int i = 0; i < 8; i++) {if (*(payload + sizeof(struct iphdr) + i) != '\0') return NULL;}
         Flow *f = new Flow();
-        f->populate(payload + sizeof(struct iphdr) + 64);
+        f->populate(payload + sizeof(struct iphdr) + 8);
         return f;
     }/*}}}*/
 
@@ -142,10 +142,10 @@ namespace aitf {
         if (extract_rr(payload) == NULL) {return payload;}
         // Get new packet size, adding size of IP header to length of payload remaining after
         // ip header and flow
-        int size = sizeof(struct iphdr) + strlen((char*)payload + sizeof(struct iphdr) + 64 + sizeof(Flow));
+        int size = sizeof(struct iphdr) + strlen((char*)payload + sizeof(struct iphdr) + 8 + sizeof(Flow));
         unsigned char *new_payload = create_ustr(size);
         strncat((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-        strcat((char*)new_payload, (char*)&payload + sizeof(struct iphdr) + 64 + sizeof(Flow));
+        strcat((char*)new_payload, (char*)&payload + sizeof(struct iphdr) + 8 + sizeof(Flow));
         return new_payload;
     }/*}}}*/
 

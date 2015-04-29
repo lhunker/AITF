@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <openssl/rand.h>
+#include <openssl/hmac.h>
 #include <map>
 
 using std::vector;

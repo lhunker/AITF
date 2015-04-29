@@ -9,12 +9,14 @@ using std::deque;
 
 namespace aitf {
     // Network protocol modes
-#define AITF_HELO 0
-#define AITF_CONF 1
-#define AITF_ACT 2
-#define AITF_ACK 3
-#define AITF_REQ 4  //request from a vicitim to its gateway
 
+    #define AITF_HELO 0
+    #define AITF_CONF 1
+    #define AITF_ACT 2
+    #define AITF_ACK 3
+    #define AITF_REQ 4  //request from a vicitim to its gateway
+
+    #define FLOW_SIZE 144
     class Flow {/*{{{*/
     public:
         deque<int> ips;

@@ -159,7 +159,7 @@ namespace aitf {
      * @return the updated packet
      */
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
-        unsigned char *new_payload = create_ustr(pkt_size + 96 + 8);
+        unsigned char *new_payload = create_ustr(pkt_size + FLOW_SIZE + 8);
 
         FILE *fp = fopen("cap", "w+");
         for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
@@ -168,14 +168,14 @@ namespace aitf {
         memcpy(new_payload, old_payload, sizeof(struct iphdr));
 
         char *fs = f->serialize();
-        for (int i = 0; i < 96; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
+        for (int i = 0; i < FLOW_SIZE; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         free(fs);
 
-        memcpy(new_payload + sizeof(struct iphdr) + 96 + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
-        ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 96 + 8);
+        memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
+        ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
         fp = fopen("cap2", "w+");
-        for (int i = 0; i < pkt_size + 104; i++) fputc(new_payload[i], fp);
+        for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
         fclose(fp);
 
         return new_payload;
@@ -190,28 +190,25 @@ namespace aitf {
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
         unsigned int src_ip = ((struct iphdr*)payload)->saddr;
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-        char *hash_cmd = create_str(100);
-        sprintf(hash_cmd, "echo -n \"%d\" | openssl enc -a -A -e -aes-256-cbc -pass pass:\"%s\"", dest_ip, key);
-        FILE *hash_fp = popen(hash_cmd, "r");
-        char *hash = create_str(100);
-        fread(hash, 1, 100, hash_fp);
+        unsigned char *s_d = create_ustr(15);
+        sprintf((char*)s_d, "%d\n", dest_ip);
+        unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char*)s_d), NULL, NULL);
 
         unsigned char *new_pkt;
         // If in filters, drop it
         if (check_filters(flow, dest_ip, src_ip)) {
-            free(hash);
             return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload);
         } else if (flow == NULL) {
             flow = new Flow();
-            flow->add_hop(ip, hash);
+            flow->add_hop(ip, (char*)hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
             new_pkt = update_pkt(payload, flow, pkt_size);
             // Otherwise I am an intermediary router, so add myself as a hop
         } else {
-            flow->add_hop(ip, hash);
+            flow->add_hop(ip, (char*)hash);
             unsigned char *tmp = strip_rr(payload);
             new_pkt = update_pkt(tmp, flow, pkt_size);
             free(tmp);
@@ -223,7 +220,6 @@ namespace aitf {
         for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
         fclose(fp);
 
-        free(hash);
         return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
     }/*}}}*/
 

@@ -48,9 +48,9 @@ namespace aitf {
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
         char *ip = create_str(8);
-        char *hash = create_str(8);
+        char *hash = create_str(16);
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
-        for (int n = 0; n < 32; n += 16) {
+        for (int n = 0; n < 32; n += 24) {
             // Convert string version of integers to actual integers
             strncpy(ip, (char*)&data[n], 8);
             istringstream sp(ip);
@@ -58,7 +58,7 @@ namespace aitf {
             sp >> i;
             ips.push_back(i);
 
-            strncpy((char*)hash, (char*)&data[n + 8], 8);
+            strncpy((char*)hash, (char*)&data[n + 8], 16);
             hashes.push_back(hash);
         }
         free(ip);
@@ -71,11 +71,11 @@ namespace aitf {
      * @return the string representation of the flow
      */
     char* Flow::serialize() {/*{{{*/
-        char *out = create_str(96);
-        char *tmp = create_str(16);
+        char *out = create_str(144);
+        char *tmp = create_str(24);
         for (int i = 0; i < 6; i++) {
             sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-            memcpy(out, tmp, 16);
+            memcpy(out, tmp, 24);
         }
         free(tmp);
         return out;
