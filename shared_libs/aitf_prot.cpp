@@ -71,11 +71,11 @@ namespace aitf {
      * @return the string representation of the flow
      */
     char* Flow::serialize() {/*{{{*/
-        char *out = create_str(384);
-        char *tmp = create_str(64);
+        char *out = create_str(96);
+        char *tmp = create_str(16);
         for (int i = 0; i < 6; i++) {
             sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-            strncat(out, tmp, 65);
+            strncat(out, tmp, 17);
         }
         free(tmp);
         return out;
