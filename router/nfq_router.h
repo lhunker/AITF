@@ -1,7 +1,6 @@
 //
 // Created by lhunker on 4/23/15.
-//
-
+// 
 #ifndef AITF_NFQ_ROUTER_H
 #define AITF_NFQ_ROUTER_H
 

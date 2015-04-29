@@ -3,6 +3,7 @@
 //
 
 #include "nfq_router.h"
+#include "checksum.h"
 
 namespace aitf {
 
@@ -124,15 +125,16 @@ namespace aitf {
      * @return the updated packet
      */
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
-        unsigned char *new_payload = create_ustr(pkt_size + 384 + 32);
-        for (int i = 0; i < sizeof(struct iphdr); i++) { new_payload[i] = old_payload[i]; }
-        strcat((char *) new_payload, "00000000000000000000000000000000");
+        unsigned char *new_payload = create_ustr(pkt_size + 240 + 8);
+	memcpy(new_payload, old_payload, sizeof(struct iphdr));
         char *fs = f->serialize();
-        strcat((char *) new_payload, fs);
-        for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
-            *(new_payload + i + strlen(fs)) = *(old_payload + i);
-        }
+	for (int i = 0; i < 240; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         free(fs);
+	memcpy(new_payload + sizeof(struct iphdr) + 240, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
+	FILE *fp = fopen("cap", "w+");
+	for (int i = 0; i < pkt_size + 248; i++) fputc(new_payload[i], fp);
+	fclose(fp);
+	((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 240 + 8);
         return new_payload;
     }/*}}}*/
 
@@ -143,7 +145,9 @@ namespace aitf {
      * @param flow
      */
     int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
+        unsigned int src_ip = ((struct iphdr*)payload)->saddr;
         unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
+	printf("%d\n", ntohs(((struct iphdr*)payload)->tot_len));
         unsigned char *new_pkt;
         // If in filters, drop it
         if (check_filters(flow)) {
@@ -163,7 +167,9 @@ namespace aitf {
             new_pkt = update_pkt(tmp, flow, pkt_size);
             free(tmp);
         }
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, sizeof(new_pkt), new_pkt);
+	int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);
+	compute_ip_checksum((struct iphdr*)payload);
+        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, np_size, new_pkt);
     }/*}}}*/
 
     /**
