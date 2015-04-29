@@ -2,6 +2,8 @@
 // Created by lhunker on 4/29/15.
 //
 
+#include "filter_line.h"
+
 namespace aitf {
     filter_line::filter_line(unsigned dest, unsigned src, Flow *f) {
         dest_ip = dest;
