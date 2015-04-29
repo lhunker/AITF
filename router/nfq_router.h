@@ -59,6 +59,8 @@ namespace aitf {
 
         bool check_filters(Flow *);
 
+        AITFPacket send_request(unsigned int, AITFPacket *);
+
         bool to_legacy_host(int ipIn);
 
         int clear_aitf_conn(struct nfq_q_handle*, int, unsigned int);

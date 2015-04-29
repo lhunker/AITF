@@ -62,6 +62,22 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Processes a victim's AITF request and sends it to the appropriate gateway
+     * @param ip the destination being bloack (or 0 if unknown)
+     * @param pkt the aitf request packet from the victim
+     */
+    AITFPacket nfq_router::send_request(unsigned int ip, AITFPacket *pkt) {
+        //TODO add local filter
+        //TODO setup adding flow to packet
+        unsigned short seq;
+        char nonce[8];
+        RAND_bytes((unsigned char *) &seq, 2);
+        RAND_bytes((unsigned char *) nonce, 8);
+        AITFPacket req(AITF_HELO, seq, nonce);
+        return req;
+    }
+
+/**
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
@@ -109,6 +125,9 @@ namespace aitf {
                 seq_data.erase(pkt_id);
                 nonce_data.erase(pkt_id);
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+            case AITF_REQ:
+                //Request from victim gateway
+                resp = send_request(dest_ip, pkt);
                 break;
             default:
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
