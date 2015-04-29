@@ -5,8 +5,6 @@
 #include "aitf_nf.h"
 #include "common.h"
 
-// TODO: the +64s aren't accounting for the size field of the AITF layer
-// Perhaps strip that out and set the size statically?
 namespace aitf {
     NFQ::NFQ() {/*{{{*/
         // Get all of my IP addresses
@@ -113,7 +111,7 @@ namespace aitf {
         //have subclass handle packet acceptance
         if ((udp_info != NULL && dest_port == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-            return nf->handle_aitf_pkt(qh, id, dest_ip, NULL); // TODO: Need to figure out what to do with this
+            return nf->handle_aitf_pkt(qh, id, dest_ip, NULL);
         // If a flow is present
         } else {
             return nf->handlePacket(qh, id, BUF_SIZE, payload, flow);

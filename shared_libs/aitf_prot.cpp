@@ -112,6 +112,10 @@ namespace aitf {
         return nonce;
     }/*}}}*/
 
+    vector<int> AITFPacket::get_flow() {/*{{{*/
+        return flow;
+    }/*}}}*/
+
     void AITFPacket::set_values(unsigned m, unsigned seq, char n[16]) {/*{{{*/
         set_mode(m);
         set_seq(seq);

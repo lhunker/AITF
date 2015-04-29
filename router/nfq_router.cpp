@@ -56,6 +56,7 @@ namespace aitf {
             aitf_block[ip] = 0;
             aitf_pkt_time[ip] = time(NULL);
         }
+        free(nonce_data[pkt_id]);
         return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
     }/*}}}*/
 
@@ -75,6 +76,7 @@ namespace aitf {
         }
         AITFPacket resp;
         switch (pkt->get_mode()) {
+            // TODO add way to receive a filtering request from a victim
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
                 seq_data[pkt_id] = pkt->get_seq();
@@ -95,7 +97,9 @@ namespace aitf {
                     return clear_aitf_conn(qh, pkt_id, dest_ip);
                 // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                // TODO: Take action here
+                vector<int> ip_flow(6);
+                // TODO change compliance modes here
+                filters.push_back(pkt->get_flow());
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
@@ -121,9 +125,9 @@ namespace aitf {
      * @return the updated packet
      */
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
-        unsigned char *new_payload = create_ustr(pkt_size + 384 + 64);
+        unsigned char *new_payload = create_ustr(pkt_size + 384 + 32);
         for (int i = 0; i < sizeof(struct iphdr); i++) { new_payload[i] = old_payload[i]; }
-        // TODO where should we add the 64 '0' characters?
+        strcat((char *) new_payload, "00000000000000000000000000000000");
         char *fs = f->serialize();
         strcat((char *) new_payload, fs);
         for (int i = sizeof(struct iphdr); i < pkt_size; i++) {
@@ -133,7 +137,7 @@ namespace aitf {
         return new_payload;
     }/*}}}*/
 
-/**
+    /**
      * Update route record layer as appropriate for network position
      * and replace current packet in kernel
      * @param payload

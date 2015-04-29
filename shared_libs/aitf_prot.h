@@ -38,6 +38,7 @@ namespace aitf {
            unsigned get_mode();
            unsigned get_seq();
            char* get_nonce();
+           vector<int> get_flow();
            void set_values(unsigned,unsigned,char[16]);
            // Used to make a string for storing
            char* serialize();
