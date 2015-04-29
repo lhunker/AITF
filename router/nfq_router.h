@@ -59,7 +59,7 @@ namespace aitf {
 
         bool check_filters(Flow *);
 
-        AITFPacket send_request(unsigned int, AITFPacket *);
+        AITFPacket handle_victim_request(unsigned int, AITFPacket *);
 
         bool to_legacy_host(int ipIn);
 

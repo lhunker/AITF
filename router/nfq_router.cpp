@@ -67,7 +67,7 @@ namespace aitf {
      * @param ip the destination being bloack (or 0 if unknown)
      * @param pkt the aitf request packet from the victim
      */
-    AITFPacket nfq_router::send_request(unsigned int ip, AITFPacket *pkt) {/*{{{*/
+    AITFPacket nfq_router::handle_victim_request(unsigned int ip, AITFPacket *pkt) {/*{{{*/
         //TODO add local filter
         //TODO setup adding flow to packet
         unsigned short seq;
@@ -129,7 +129,7 @@ namespace aitf {
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
             case AITF_REQ:
                 //Request from victim gateway
-                resp = send_request(dest_ip, pkt);
+                resp = handle_victim_request(dest_ip, pkt);
                 break;
             default:
                 return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
@@ -188,7 +188,7 @@ namespace aitf {
         if (check_filters(flow)) {
             free(hash);
             return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
-        // If going to legacy host, discard RR record
+            // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload);
         } else if (flow == NULL) {
@@ -196,7 +196,7 @@ namespace aitf {
             flow->add_hop(ip, hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
             new_pkt = update_pkt(payload, flow, pkt_size);
-        // Otherwise I am an intermediary router, so add myself as a hop
+            // Otherwise I am an intermediary router, so add myself as a hop
         } else {
             flow->add_hop(ip, hash);
             unsigned char *tmp = strip_rr(payload);
@@ -234,7 +234,7 @@ namespace aitf {
     bool nfq_router::check_filters(Flow *flow) {/*{{{*/
         for (int i = 0; i < filters.size(); i++) {
             for (int j = 0; j < flow->ips.size(); j++) {
-                if (flow->ips.at(j) != filters[i].at(j)) {break;}
+                if (flow->ips.at(j) != filters[i].at(j)) { break; }
                 return true;
             }
         }
