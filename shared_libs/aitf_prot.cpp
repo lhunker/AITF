@@ -28,7 +28,7 @@ namespace aitf {
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
         ips.pop_front();
-	free(hashes[0]);
+        free(hashes[0]);
         hashes.pop_front();
         ips.push_back(ip);
         hashes[5] = create_str(8);
@@ -75,7 +75,7 @@ namespace aitf {
         char *tmp = create_str(16);
         for (int i = 0; i < 6; i++) {
             sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-	    memcpy(out, tmp, 16);
+            memcpy(out, tmp, 16);
         }
         free(tmp);
         return out;

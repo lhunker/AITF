@@ -42,9 +42,9 @@ namespace aitf {
     private:/*{{{*/
         char *s_ip;
         int ip;
-        char *hash;
+        char *key;
 
-        char *old_hash;
+        char *old_key;
 
         map<unsigned int,int> aitf_block;
         map<unsigned int,int> aitf_block_time;
@@ -55,7 +55,7 @@ namespace aitf {
         map<int,char*> nonce_data;
         vector< vector<int> > filters;
 
-        void update_hash();
+        void update_key();
 
         bool check_filters(Flow *);
 

@@ -85,7 +85,7 @@ namespace aitf {
         int dest_port = -1;
         int pkt_size = 0;
         // Get IP header and data payload
-	pkt_size = nfq_get_payload(nf_data, &payload);
+        pkt_size = nfq_get_payload(nf_data, &payload);
         if (pkt_size) {
             ip_info = (struct iphdr*)payload;
             if (ip_info) {
