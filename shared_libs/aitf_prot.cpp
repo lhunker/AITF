@@ -75,7 +75,7 @@ namespace aitf {
         char *tmp = create_str(16);
         for (int i = 0; i < 6; i++) {
             sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-            strncat(out, tmp, 17);
+	    memcpy(out, tmp, 16);
         }
         free(tmp);
         return out;

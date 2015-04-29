@@ -133,7 +133,7 @@ namespace aitf {
         char *fs = f->serialize();
 	for (int i = 0; i < 96; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         free(fs);
-	memcpy(new_payload + sizeof(struct iphdr) + 96, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
+	memcpy(new_payload + sizeof(struct iphdr) + 96 + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
 	((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 96 + 8);
 	fp = fopen("cap2", "w+");
 	for (int i = 0; i < pkt_size + 104; i++) fputc(new_payload[i], fp);
