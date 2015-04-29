@@ -113,7 +113,9 @@ namespace aitf {
     }/*}}}*/
 
     vector<int> AITFPacket::get_flow() {/*{{{*/
-        return flow;
+        vector<int> ip_v(6);
+        for (int i = 0; i < 6; i++) ip_v[i] = flow.ips[i];
+        return ip_v;
     }/*}}}*/
 
     void AITFPacket::set_values(unsigned m, unsigned seq, char n[16]) {/*{{{*/

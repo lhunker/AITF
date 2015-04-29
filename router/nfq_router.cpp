@@ -97,7 +97,6 @@ namespace aitf {
                     return clear_aitf_conn(qh, pkt_id, dest_ip);
                 // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                vector<int> ip_flow(6);
                 // TODO change compliance modes here
                 filters.push_back(pkt->get_flow());
                 break;
