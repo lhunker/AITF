@@ -10,9 +10,9 @@ namespace aitf {
     nfq_router::nfq_router(vector<endhost> hostIn, char *str_ip) {/*{{{*/
         s_ip = create_str(15);
         strcpy(s_ip, str_ip);
-        struct sockaddr_in s;
-        inet_aton(str_ip, &s.sin_addr);
-        ip = s.sin_addr.s_addr;
+	unsigned int c1,c2,c3,c4;
+	sscanf(s_ip, "%d.%d.%d.%d",&c1,&c2,&c3,&c4);
+	ip = (unsigned int)c4+c3*256+c2*256*256+c1*256*256*256;
 
         subnet = vector<endhost>(hostIn);
 
@@ -125,16 +125,19 @@ namespace aitf {
      * @return the updated packet
      */
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size) {/*{{{*/
-        unsigned char *new_payload = create_ustr(pkt_size + 240 + 8);
+        unsigned char *new_payload = create_ustr(pkt_size + 96 + 8);
+	FILE *fp = fopen("cap", "w+");
+	for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
+	fclose(fp);
 	memcpy(new_payload, old_payload, sizeof(struct iphdr));
         char *fs = f->serialize();
-	for (int i = 0; i < 240; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
+	for (int i = 0; i < 96; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         free(fs);
-	memcpy(new_payload + sizeof(struct iphdr) + 240, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
-	FILE *fp = fopen("cap", "w+");
-	for (int i = 0; i < pkt_size + 248; i++) fputc(new_payload[i], fp);
+	memcpy(new_payload + sizeof(struct iphdr) + 96, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
+	((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 96 + 8);
+	fp = fopen("cap2", "w+");
+	for (int i = 0; i < pkt_size + 104; i++) fputc(new_payload[i], fp);
 	fclose(fp);
-	((struct iphdr*)new_payload)->tot_len = htons(pkt_size + 240 + 8);
         return new_payload;
     }/*}}}*/
 

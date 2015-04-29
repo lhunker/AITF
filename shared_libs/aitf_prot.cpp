@@ -27,12 +27,12 @@ namespace aitf {
     void Flow::add_hop(int ip, char *hash) {/*{{{*/
         // Using a maximum of six entries in a flow as per AITF whitepaper
         // This mitigates route extension attacks
-        if (ips[6] == 0) {
-            ips.pop_front();
-            hashes.pop_front();
-        }
+        ips.pop_front();
+	free(hashes[0]);
+        hashes.pop_front();
         ips.push_back(ip);
-        hashes.push_back(hash);
+        hashes[5] = create_str(8);
+        strcpy(hashes[5], (hash));
     }/*}}}*/
 
     const bool Flow::operator==(const Flow &f) {/*{{{*/
@@ -74,7 +74,7 @@ namespace aitf {
         char *out = create_str(384);
         char *tmp = create_str(64);
         for (int i = 0; i < 6; i++) {
-            sprintf(tmp, "%032d%s", ips[i], hashes[i]);
+            sprintf(tmp, "%08d%s", ips[i], hashes[i]);
             strncat(out, tmp, 65);
         }
         free(tmp);
