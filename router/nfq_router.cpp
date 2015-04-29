@@ -171,7 +171,10 @@ namespace aitf {
             free(tmp);
         }
 	int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);
-	compute_ip_checksum((struct iphdr*)payload);
+	compute_ip_checksum((struct iphdr*)new_pkt);
+	FILE *fp = fopen("cap2", "w+");
+	for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
+	fclose(fp);
         return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, np_size, new_pkt);
     }/*}}}*/
 
