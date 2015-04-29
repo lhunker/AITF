@@ -87,17 +87,16 @@ namespace aitf {
         mode = m;
     }/*}}}*/
 
-    void AITFPacket::set_seq(unsigned seq) {/*{{{*/
-        seq = seq & 0xFFFF;
+    void AITFPacket::set_seq(unsigned short seq) {/*{{{*/
         sequence = seq;
     }/*}}}*/
 
-    void AITFPacket::set_nonce(char n[16]) {/*{{{*/
-        for (int i = 0; i < 16; i++) {nonce[i] = n[i];}
+    void AITFPacket::set_nonce(char n[8]) {/*{{{*/
+        for (int i = 0; i < 8; i++) { nonce[i] = n[i]; }
     }/*}}}*/
 
-    void AITFPacket::set_nonce(unsigned char n[16]) {/*{{{*/
-        for (int i = 0; i < 16; i++) {nonce[i] = n[i];}
+    void AITFPacket::set_nonce(unsigned char n[8]) {/*{{{*/
+        for (int i = 0; i < 8; i++) { nonce[i] = n[i]; }
     }/*}}}*/
 
     unsigned AITFPacket::get_mode() {/*{{{*/
@@ -113,12 +112,13 @@ namespace aitf {
     }/*}}}*/
 
     vector<int> AITFPacket::get_flow() {/*{{{*/
+        //TODO does this need to handle the hashes too?
         vector<int> ip_v(6);
         for (int i = 0; i < 6; i++) ip_v[i] = flow.ips[i];
         return ip_v;
     }/*}}}*/
 
-    void AITFPacket::set_values(unsigned m, unsigned seq, char n[16]) {/*{{{*/
+    void AITFPacket::set_values(unsigned m, unsigned short seq, char *n) {/*{{{*/
         set_mode(m);
         set_seq(seq);
         set_nonce(n);
@@ -136,8 +136,8 @@ namespace aitf {
         set_seq(fmod(rand(), (pow(2, 16))));
         // Using openSSL for characters
         RAND_load_file("/dev/urandom", 1024);
-        unsigned char *buf = create_ustr(16);
-        RAND_bytes(buf, 16);
+        unsigned char *buf = create_ustr(8);
+        RAND_bytes(buf, 8);
         set_nonce(buf);
         Flow flow;
         free(buf);
@@ -145,7 +145,7 @@ namespace aitf {
 
     // Used when responding to connections and the nonce and sequence
     // have already been calculated
-    AITFPacket::AITFPacket(unsigned m, unsigned seq, char n[16]) {/*{{{*/
+    AITFPacket::AITFPacket(unsigned m, unsigned seq, char n[8]) {/*{{{*/
         set_mode(m);
         set_seq(seq);
         set_nonce(n);
