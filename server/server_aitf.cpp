@@ -11,7 +11,7 @@ namespace aitf {
 
     int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
+        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 
     /**
@@ -29,7 +29,7 @@ namespace aitf {
             strcpy((char*)new_payload, (char*)payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
             // TODO: reinsert new_payload as packet
         }
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, 0, NULL);
+        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT_PACKET, 0, NULL);
     }/*}}}*/
 
     FlowPaths::FlowPaths() {/*{{{*/

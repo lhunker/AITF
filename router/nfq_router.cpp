@@ -59,7 +59,9 @@ namespace aitf {
             aitf_pkt_time[ip] = time(NULL);
         }
         free(nonce_data[pkt_id]);
-        return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+        int ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+        if (ret == -1) printf("Failed to set verdict!\n");
+        return ret;
     }/*}}}*/
 
     /**
@@ -87,13 +89,18 @@ namespace aitf {
             // If this address has been blocked, drop packet
             if (aitf_block[ip]) {
                 if ((time(NULL) - aitf_block_time[ip]) > BLOCK_TIMEOUT) aitf_block[ip] = 0;
-                else return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+                else {
+                    int ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+                    if (ret == -1) printf("Failed to set packet verdict\n");
+                    return ret;
+                }
             }
         } else {
             aitf_block[ip] = 0;
         }
 
         AITFPacket resp;
+        int ret;
         switch (pkt->get_mode()) {
             // TODO add way to receive a filtering request from a victim
             case AITF_HELO:
@@ -126,16 +133,22 @@ namespace aitf {
                 free(nonce_data[pkt_id]);
                 seq_data.erase(pkt_id);
                 nonce_data.erase(pkt_id);
-                return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+                ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+                if (ret == -1) printf("Failed to set verdict\n");
+                return ret;
             case AITF_REQ:
                 //Request from victim gateway
                 resp = handle_victim_request(dest_ip, pkt);
                 break;
             default:
-                return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+                ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+                if (ret == -1) printf("Failed to set verdict\n");
+                return ret;
         }
         // TODO send resp packet
-        return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+        ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+        if (ret == -1) printf("Failed to set verdict\n");
+        return ret;
     }/*}}}*/
 
     /**
@@ -187,7 +200,7 @@ namespace aitf {
         // If in filters, drop it
         if (check_filters(flow, dest_ip, src_ip)) {
             free(hash);
-            return nfq_set_verdict(qh, pkt_id, AITF_DROP_PACKET, 0, NULL);
+            return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload);
@@ -211,7 +224,7 @@ namespace aitf {
         fclose(fp);
 
         free(hash);
-        return nfq_set_verdict(qh, pkt_id, AITF_ACCEPT_PACKET, np_size, new_pkt);
+        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
     }/*}}}*/
 
     /**
