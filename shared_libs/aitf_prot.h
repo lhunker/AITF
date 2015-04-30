@@ -73,6 +73,8 @@ namespace aitf {
         // Used when sending over the network
         char *pack();
 
+        Flow flow;
+
         unsigned int getSrc_ip() const {
             return src_ip;
         }
@@ -85,7 +87,6 @@ namespace aitf {
         //TODO add dest ip to block?
         unsigned mode;
         unsigned short sequence;
-        Flow flow;
         unsigned src_ip;
         unsigned dest_ip;
         char nonce[8];

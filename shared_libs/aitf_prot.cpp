@@ -47,18 +47,19 @@ namespace aitf {
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
         int ip;
-        char *hash = create_str(16);
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
-        for (int n = 0; n < FLOW_SIZE; n += 12) {
+        for (int n = 0; n < 72; n += 12) {
+            char *hash = create_str(8);
             // Convert string version of integers to actual integers
             memcpy(&ip, (char *) data + n, 4);
 
+            ips.pop_front();
             ips.push_back(ip);
 
             memcpy(hash, (char *) data + n + 4, 8);
+            hashes.pop_front();
             hashes.push_back(hash);
         }
-        free(hash);
     }/*}}}*/
 
     /**
@@ -127,7 +128,7 @@ namespace aitf {
         set_nonce(n);
     }/*}}}*//*}}}*/
 
-    void AITFPacket::populate(char *s) {
+    void AITFPacket::populate(char *s) {/*{{{*/
         int i;
         char c[8];
         memcpy(&i, s, sizeof(int));
@@ -141,10 +142,10 @@ namespace aitf {
         memcpy(&i, s + sizeof(int) * 3 + 8, sizeof(int));
         dest_ip = i;
         flow.populate((unsigned char*)s + sizeof(int) * 4 + 8);
-    }
+    }/*}}}*/
 
     char* AITFPacket::serialize() {/*{{{*/
-        char *s = create_str(sizeof(AITFPacket));
+        char *s = create_str(96);
         memcpy(s, &mode, sizeof(int));
         memcpy(s + sizeof(int), &sequence, sizeof(int));
         memcpy(s + sizeof(int) * 2, &nonce, 8);
