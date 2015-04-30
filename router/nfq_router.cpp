@@ -161,7 +161,7 @@ namespace aitf {
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size, bool pre) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + FLOW_SIZE + 8);
 
-        if (pre) {
+        if (!pre) {
             FILE *fp = fopen("caps/pre_mod", "w+");
             for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
             fclose(fp);
@@ -170,13 +170,14 @@ namespace aitf {
         memcpy(new_payload, old_payload, sizeof(struct iphdr));
 
         char *fs = f->serialize();
-        for (int i = 0; i < FLOW_SIZE; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
+        //for (int i = 0; i < FLOW_SIZE; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
+        memcpy(new_payload + sizeof(struct iphdr) + 8, fs, FLOW_SIZE);
         free(fs);
-
+        printf("size: %lu\n", (pkt_size - sizeof(struct iphdr)));
         memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
         ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
-        if (pre) {
+        if (!pre) {
             FILE *fp = fopen("caps/post_mod", "w+");
             for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
             fclose(fp);
@@ -199,7 +200,7 @@ namespace aitf {
         sprintf((char*)s_d, "%d\n", dest_ip);
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char*)s_d), NULL, NULL);
 
-        if (pre) {
+        if (!pre) {
             FILE *fp = fopen("caps/pre_handle", "w+");
             for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
             fclose(fp);
@@ -212,6 +213,7 @@ namespace aitf {
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload, pkt_size);
+            ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
         } else if (flow == NULL) {
             flow = new Flow();
             flow->add_hop(ip, (char*)hash);
@@ -221,7 +223,7 @@ namespace aitf {
         } else {
             flow->add_hop(ip, (char*)hash);
             unsigned char *tmp = strip_rr(payload, pkt_size);
-            new_pkt = update_pkt(tmp, flow, pkt_size, pre);
+            new_pkt = update_pkt(tmp, flow, pkt_size - FLOW_SIZE - 8, pre);
             free(tmp);
         }
         int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);

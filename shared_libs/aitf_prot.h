@@ -16,7 +16,7 @@ namespace aitf {
     #define AITF_ACK 3
     #define AITF_REQ 4  //request from a vicitim to its gateway
 
-    #define FLOW_SIZE 144
+#define FLOW_SIZE 72
     class Flow {/*{{{*/
     public:
         deque<int> ips;

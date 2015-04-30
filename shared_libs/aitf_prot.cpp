@@ -1,9 +1,7 @@
-#include <openssl/rand.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <iostream>
-#include <sstream>
 #include "aitf_prot.h"
 #include "common.h"
 
@@ -15,7 +13,7 @@ namespace aitf {
         hashes = *(new deque<char*>(6));
         for (int i = 0; i < 6; i++) {
             hashes[i] = create_str(8);
-            strcpy(hashes[i], "0000000000000000");
+            strcpy(hashes[i], "00000000");
         }
     }/*}}}*/
 
@@ -31,7 +29,7 @@ namespace aitf {
         free(hashes[0]);
         hashes.pop_front();
         ips.push_back(ip);
-        hashes[5] = create_str(8);
+        hashes[5] = create_str(16);
         strcpy(hashes[5], (hash));
     }/*}}}*/
 
@@ -47,21 +45,18 @@ namespace aitf {
     void Flow::populate(unsigned char *data) {/*{{{*/
         // 64 = (32 bits/data entry * (6 ips + 6 hashes)) / 4 bits/char
         // Doubled to get IP/hash pair
-        char *ip = create_str(8);
+        int ip;
         char *hash = create_str(16);
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
-        for (int n = 0; n < 32; n += 24) {
+        for (int n = 0; n < FLOW_SIZE; n += 12) {
             // Convert string version of integers to actual integers
-            strncpy(ip, (char*)data + n, 8);
-            istringstream sp(ip);
-            int i;
-            sp >> i;
-            ips.push_back(i);
+            memcpy(&ip, (char *) data + n, 4);
 
-            strncpy(hash, (char*)data + n + 8, 16);
+            ips.push_back(ip);
+
+            memcpy(hash, (char *) data + n + 4, 8);
             hashes.push_back(hash);
         }
-        free(ip);
         free(hash);
     }/*}}}*/
 
@@ -71,11 +66,13 @@ namespace aitf {
      * @return the string representation of the flow
      */
     char* Flow::serialize() {/*{{{*/
-        char *out = create_str(144);
-        char *tmp = create_str(24);
+        char *out = create_str(FLOW_SIZE);
+        char *tmp = create_str(12);
         for (int i = 0; i < 6; i++) {
-            sprintf(tmp, "%08d%s", ips[i], hashes[i]);
-            memcpy(out + 24 * i, tmp, 24);
+            int ip = ips[i];
+            memcpy(tmp, &ip, 4);
+            sprintf(tmp + 4, "%s", hashes[i]);  //copy hash (8 bytes)
+            memcpy(out + 12 * i, tmp, 12);
         }
         free(tmp);
         return out;
