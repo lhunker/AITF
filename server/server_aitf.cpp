@@ -25,7 +25,7 @@ namespace aitf {
         unsigned int src_ip = ((struct iphdr *) payload)->saddr;
         Flow f;
         char *fs = flow->serialize();
-        f.populate(fs);
+        f.populate((unsigned char *) fs);
         free(fs);
         flows->add_flow(f, src_ip); //TODO put threshold check in add
         unsigned char *new_pkt;
