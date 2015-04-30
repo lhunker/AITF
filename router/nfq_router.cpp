@@ -168,7 +168,7 @@ namespace aitf {
         addr.sin_port = htons(AITF_PORT);
         free(sock_ip);
         char *msg = resp.serialize();
-        if (sendto(sock, msg, resp.get_size(), 0, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+        if (sendto(sock, msg, sizeof(resp), 0, (struct sockaddr*)&addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
         return ret;
     }/*}}}*/
