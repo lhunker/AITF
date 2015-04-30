@@ -14,10 +14,10 @@ int main(int argc, char *argv[]) {
         e.ip = 17433610;
         e.legacy = true;
     } else if (strcmp(argv[1], "10.4.10.4") == 0) {
-        e.ip = 67765258;
+        e.ip = 84542474;
         e.legacy = true;
     } else if (strcmp(argv[1], "10.4.10.7") == 0) {
-        e.ip = 118096906;
+        e.ip = 101319690;
         e.legacy = true;
     }
     aitf::nfq_router nfq(endhosts, argv[1]);
