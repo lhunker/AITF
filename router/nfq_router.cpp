@@ -82,6 +82,8 @@ namespace aitf {
         RAND_bytes((unsigned char *) &seq, 2);
         RAND_bytes((unsigned char *) nonce, 8);
         AITFPacket req(AITF_HELO, seq, nonce);
+        req.dest_ip = pkt->dest_ip;
+        req.src_ip = pkt->src_ip;
         return req;
     }/*}}}*/
 
