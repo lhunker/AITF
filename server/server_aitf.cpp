@@ -23,7 +23,11 @@ namespace aitf {
     int Server::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload,
                              Flow *flow) {/*{{{*/
         unsigned int src_ip = ((struct iphdr *) payload)->saddr;
-        flows->add_flow(*flow, src_ip); //TODO put threshold check in add
+        Flow f;
+        char *fs = flow->serialize();
+        f.populate(fs);
+        free(fs);
+        flows->add_flow(f, src_ip); //TODO put threshold check in add
         unsigned char *new_pkt;
         new_pkt = strip_rr(payload, pkt_size);
         if (flow != NULL)
