@@ -35,7 +35,7 @@ namespace aitf {
     }/*}}}*/
 
     const bool Flow::operator==(const Flow &f) {/*{{{*/
-        for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i) || memcmp(hashes.at(i), f.hashes.at(i), 8) == 0) {return false;}}
+        for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i) || memcmp(hashes.at(i), f.hashes.at(i), 8) != 0) {return false;}}
         return true;
     }/*}}}*/
 
