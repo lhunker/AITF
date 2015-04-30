@@ -90,6 +90,7 @@ namespace aitf {
      * @param pkt
      */
     int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
+        printf("Got AITF control message %d\n", pkt->get_mode());
         if (aitf_block.count(dest_ip)) {
             // If this address has been blocked, drop packet
             if (aitf_block[dest_ip]) {
@@ -154,20 +155,28 @@ namespace aitf {
         ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
         if (ret == -1) {printf("Failed to set verdict\n"); return ret;}
 
-        Flow *f = pkt->get_flow();
         int gateway_ip = 0;
-        for (int i = 0; i < 6; i++) {if (f->ips[i] != 0) {gateway_ip = f->ips[i]; break;}}
+        char *sock_ip = create_str(20);
+        unsigned char bytes[4];
+        if (resp.get_mode() % 2 == 0) {
+            Flow *f = pkt->get_flow();
+            for (int i = 0; i < 6; i++) {if (f->ips[i] != 0) {gateway_ip = f->ips[i]; break;}}
+            bytes[0] = g_ip & 0xFF;
+            bytes[1] = (g_ip >> 8) & 0xFF;
+            bytes[2] = (g_ip >> 16) & 0xFF;
+            bytes[3] = (g_ip >> 24) & 0xFF;
+            sprintf(sock_ip, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
+        } else {
+            bytes[0] = src_ip & 0xFF;
+            bytes[1] = (src_ip >> 8) & 0xFF;
+            bytes[2] = (src_ip >> 16) & 0xFF;
+            bytes[3] = (src_ip >> 24) & 0xFF;
+            sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+        }
 
         int sock = socket(AF_INET, SOCK_DGRAM, 0);
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
-        unsigned char bytes[4];
-        bytes[0] = g_ip & 0xFF;
-        bytes[1] = (g_ip >> 8) & 0xFF;
-        bytes[2] = (g_ip >> 16) & 0xFF;
-        bytes[3] = (g_ip >> 24) & 0xFF;
-        char *sock_ip = create_str(20);
-        sprintf(sock_ip, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
         inet_aton(sock_ip, &addr.sin_addr);
         addr.sin_port = htons(AITF_PORT);
         free(sock_ip);
