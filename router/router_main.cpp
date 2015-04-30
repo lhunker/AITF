@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
         e.ip = 101319690;
         e.legacy = true;
     }
+    endhosts.push_back(e);
     aitf::nfq_router nfq(endhosts, argv[1]);
     nfq.loop();
 
