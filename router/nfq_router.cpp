@@ -213,7 +213,8 @@ namespace aitf {
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
             new_pkt = strip_rr(payload, pkt_size);
-            ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
+            if (flow != NULL)
+                ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
         } else if (flow == NULL) {
             flow = new Flow();
             flow->add_hop(ip, (char*)hash);

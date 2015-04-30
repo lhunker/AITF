@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdio.h>
 #include <time.h>
 #include <openssl/rand.h>
 #include <openssl/hmac.h>

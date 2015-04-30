@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <deque>
+#include <sstream>
+#include <openssl/rand.h>
+#include <cstdlib>
 
 using std::vector;
 using std::deque;
