@@ -4,9 +4,23 @@
 
 #include "nfq_router.h"
 
+using aitf::endhost;
+
 int main(int argc, char *argv[]) {
     if (argc < 2) {printf("Please provide an IP address!\n"); return 0;}
-    aitf::nfq_router nfq(vector<aitf::endhost>(10), argv[1]);
+    vector<endhost> endhosts(1);
+    struct endhost e;
+    if (strcmp(argv[1], "10.4.10.2") == 0) {
+        e.ip = 17433610;
+        e.legacy = true;
+    } else if (strcmp(argv[1], "10.4.10.4") == 0) {
+        e.ip = 84542474;
+        e.legacy = true;
+    } else if (strcmp(argv[1], "10.4.10.7") == 0) {
+        e.ip = 101319690;
+        e.legacy = true;
+    }
+    aitf::nfq_router nfq(endhosts, argv[1]);
     nfq.loop();
 
     return 0;
