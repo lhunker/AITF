@@ -128,8 +128,15 @@ namespace aitf {
     }/*}}}*//*}}}*/
 
     char* AITFPacket::serialize() {/*{{{*/
-        // TODO implement me
-        return "";
+        char *s = create_str(sizeof(AITFPacket));
+        memcpy(s, &mode, sizeof(int));
+        memcpy(s + sizeof(int), &sequence, sizeof(int));
+        memcpy(s + sizeof(int) * 2, &nonce, 8);
+        memcpy(s + sizeof(int) * 2 + sizeof(nonce), &src_ip, sizeof(int));
+        memcpy(s + sizeof(int) * 3 + sizeof(nonce), &dest_ip, sizeof(int));
+        char *fs = flow.serialize();
+        memcpy(s + sizeof(int) * 4 + sizeof(nonce), fs, FLOW_SIZE);
+        return s;
     }/*}}}*/
 
     // For initial connections in which we do not have values
