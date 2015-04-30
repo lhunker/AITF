@@ -14,8 +14,9 @@
 #include <openssl/hmac.h>
 #include <map>
 
-#define PKT_THRESHOLD 5
-#define PKT_TIMEOUT .5
+#define PKT_THRESHOLD 55
+#define FLOW_THRESHOLD 150
+#define PKT_TIMEOUT 1
 
 namespace aitf {
     class FlowPaths {/*{{{*/
@@ -23,7 +24,7 @@ namespace aitf {
             FlowPaths();
 
         void add_flow(Flow, unsigned);
-            bool check_attack_threshold(Flow);
+
         private:
             int timeout;
             vector<Flow> route_ips;
@@ -31,7 +32,15 @@ namespace aitf {
         vector<vector<int> > pkt_count;
         vector<vector<int> > pkt_times;
 
+        void sendFilterRequest(Flow f, int ip);
+
         void reset_count(int, int);
+
+        void reset_times(int flow);
+
+        bool check_attack_thres_ip(int flow);
+
+        bool check_attack_thres_flow(int flow, int i);
     };/*}}}*/
 
     class Server : public NFQ {/*{{{*/
@@ -39,7 +48,7 @@ namespace aitf {
             Server();
             ~Server();
 
-        int handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int dest_ip, AITFPacket *pkt);
+        int handle_aitf_pkt(struct nfq_q_handle *, int, unsigned int, unsigned int, AITFPacket *);
 
         int handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow);
 

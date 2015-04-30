@@ -10,10 +10,25 @@ namespace aitf {
         delete flows;
     }/*}}}*/
 
-    int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
+    int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip,
+                                AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
         return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
     }/*}}}*/
+
+    void FlowPaths::sendFilterRequest(Flow f, int ip) {
+        AITFPacket req(AITF_REQ, ip, f);
+        int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        char *sock_ip = "10.4.10.2";
+        inet_aton(sock_ip, &addr.sin_addr);
+        addr.sin_port = htons(AITF_PORT);
+        free(sock_ip);
+        char *msg = req.serialize();
+        if (sendto(sock, msg, req.get_size(), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+            printf("Failed to send AITF response\n");
+    }
 
     /**
      * Removes route record from packet and checks attack threshold
@@ -61,12 +76,19 @@ namespace aitf {
                             return;
                         } else {
                             pkt_count[i][j]++;
+                            if (check_attack_thres_flow(i, j)) {
+                                sendFilterRequest(flow, src_ip);
+                            }
                         }
                     }
                 }
                 pkt_count[i].push_back(0);
                 pkt_times[i].push_back(time(NULL));
                 src_ips[i].push_back(src_ip);
+                reset_times(i);
+            }
+            if (check_attack_thres_ip(i)) {
+                sendFilterRequest(flow, 0);
             }
         }
         // No resize is necessary as the vector library reallocates as necessary
@@ -89,19 +111,26 @@ namespace aitf {
         pkt_times[flow][ip] = time(NULL);
     }/*}}}*/
 
-    /**
-     * Checks attack threshold for a given flow
-     * @param flow
-     * @return true if over threshold
-     */
-    bool FlowPaths::check_attack_threshold(Flow flow) {/*{{{*/
-//        for (int i = 0; i < route_ips.size(); i++) {
-//            if (route_ips[i] == flow) {
-//                if (pkt_count[i] > PKT_THRESHOLD)
-//                    return true;
-//                return false;
-//            }
-//        }
-        return false;
-    }/*}}}*/
+    void FlowPaths::reset_times(int flow) {
+        for (int i = 0; i < src_ips[i].size(); i++) {
+            if (pkt_times[flow][i] + PKT_TIMEOUT < time(NULL)) {
+                pkt_times[flow][i] = time(NULL);
+                pkt_count[flow][i] = 0;
+            }
+        }
+    }
+
+    bool FlowPaths::check_attack_thres_flow(int flow, int i) {
+        return (pkt_count[flow][i] > PKT_THRESHOLD);
+    }
+
+    bool FlowPaths::check_attack_thres_ip(int flow) {
+        int sum = 0;
+        for (int i = 0; i < src_ips[flow].size(); i++) {
+            sum += pkt_count[flow][i];
+        }
+        return sum > FLOW_THRESHOLD;
+    }
+
+
 }

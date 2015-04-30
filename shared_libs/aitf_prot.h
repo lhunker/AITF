@@ -51,6 +51,8 @@ namespace aitf {
 
         AITFPacket(unsigned, unsigned, char[8]);
 
+        AITFPacket(unsigned int m, unsigned int ip, Flow f);
+
         unsigned get_mode();
 
         unsigned get_seq();

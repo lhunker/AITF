@@ -164,4 +164,12 @@ namespace aitf {
         set_nonce(n);
         Flow flow;
     }/*}}}*/
+
+    AITFPacket::AITFPacket(unsigned m, unsigned ip, Flow f) {
+        flow = f;
+        src_ip = ip;
+        mode = m;
+        set_nonce((char *) "00000000");
+        sequence = 5;
+    }
 }
