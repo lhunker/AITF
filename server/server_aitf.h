@@ -21,14 +21,17 @@ namespace aitf {
     class FlowPaths {/*{{{*/
         public:
             FlowPaths();
-            void add_flow(Flow);
+
+        void add_flow(Flow, unsigned);
             bool check_attack_threshold(Flow);
         private:
             int timeout;
             vector<Flow> route_ips;
-            vector<int> pkt_count;
-            vector<int> pkt_times;
-            void reset_count(int);
+        vector<vector<unsigned> > src_ips;
+        vector<vector<int> > pkt_count;
+        vector<vector<int> > pkt_times;
+
+        void reset_count(int, int);
     };/*}}}*/
 
     class Server : public NFQ {/*{{{*/
