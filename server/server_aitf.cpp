@@ -26,7 +26,7 @@ namespace aitf {
         addr.sin_port = htons(AITF_PORT);
         free(sock_ip);
         char *msg = req.serialize();
-        if (sendto(sock, msg, req.get_size(), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+        if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
     }
 
@@ -79,6 +79,7 @@ namespace aitf {
                             if (check_attack_thres_flow(i, j)) {
                                 sendFilterRequest(flow, src_ip);
                             }
+                            return;
                         }
                     }
                 }
@@ -86,9 +87,11 @@ namespace aitf {
                 pkt_times[i].push_back(time(NULL));
                 src_ips[i].push_back(src_ip);
                 reset_times(i);
-            }
-            if (check_attack_thres_ip(i)) {
-                sendFilterRequest(flow, 0);
+
+                if (check_attack_thres_ip(i)) {
+                    sendFilterRequest(flow, 0);
+                }
+                return;
             }
         }
         // No resize is necessary as the vector library reallocates as necessary
@@ -96,7 +99,7 @@ namespace aitf {
         pkt_count.push_back(vector<int>(5));
         pkt_count[pkt_count.size() - 1].push_back(1);
         pkt_times.push_back(vector<int>(5));
-        pkt_times[pkt_times.size()].push_back(time(NULL));
+        pkt_times[pkt_times.size() - 1].push_back(time(NULL));
         src_ips.push_back(vector<unsigned>(5));
         src_ips[src_ips.size() - 1].push_back(src_ip);
     }/*}}}*/
