@@ -159,12 +159,12 @@ namespace aitf {
         char *sock_ip = create_str(20);
         unsigned char bytes[4];
         if (resp.get_mode() % 2 == 0) {
-            Flow *f = pkt->get_flow();
-            for (int i = 0; i < 6; i++) {if (f->ips[i] != 0) {gateway_ip = f->ips[i]; break;}}
-            bytes[0] = g_ip & 0xFF;
-            bytes[1] = (g_ip >> 8) & 0xFF;
-            bytes[2] = (g_ip >> 16) & 0xFF;
-            bytes[3] = (g_ip >> 24) & 0xFF;
+            Flow f = pkt->get_flow();
+            for (int i = 0; i < 6; i++) {if (f.ips[i] != 0) {gateway_ip = f.ips[i]; break;}}
+            bytes[0] = gateway_ip & 0xFF;
+            bytes[1] = (gateway_ip >> 8) & 0xFF;
+            bytes[2] = (gateway_ip >> 16) & 0xFF;
+            bytes[3] = (gateway_ip >> 24) & 0xFF;
             sprintf(sock_ip, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
         } else {
             bytes[0] = src_ip & 0xFF;
