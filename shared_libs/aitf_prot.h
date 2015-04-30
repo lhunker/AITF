@@ -56,7 +56,7 @@ namespace aitf {
 
         char *get_nonce();
 
-        vector<int> get_flow();
+        Flow get_flow();
 
         void set_flow(vector<int>);
 
@@ -68,11 +68,21 @@ namespace aitf {
         // Used when sending over the network
         char *pack();
 
+        unsigned int getSrc_ip() const {
+            return src_ip;
+        }
+
+        unsigned int getDest_ip() const {
+            return dest_ip;
+        }
+
     private:
         //TODO add dest ip to block?
         unsigned mode;
         unsigned short sequence;
         Flow flow;
+        unsigned src_ip;
+        unsigned dest_ip;
         char nonce[8];
 
         void set_mode(unsigned);

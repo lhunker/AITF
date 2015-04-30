@@ -66,6 +66,7 @@ namespace aitf {
 
         bool to_legacy_host(int ipIn);
 
+        void addFilter(filter_line f);
         int clear_aitf_conn(struct nfq_q_handle*, int, unsigned int);
         unsigned char *update_pkt(unsigned char *old_payload, Flow *f, int pkt_size, bool);
         vector<endhost> subnet;

@@ -5,10 +5,17 @@
 #include "filter_line.h"
 
 namespace aitf {
-    filter_line::filter_line(unsigned dest, unsigned src, Flow *f) {
+    filter_line::filter_line(unsigned dest, Flow f, unsigned src) {
         dest_ip = dest;
         src_ip = src;
         flow = f;
+        hasFlow = true;
+    }
+
+    filter_line::filter_line(unsigned dest, unsigned src) {
+        dest_ip = dest;
+        src_ip = src;
+        hasFlow = false;
     }
 
     /**
@@ -18,14 +25,14 @@ namespace aitf {
      * @param f the flow of the packet
      * @return true if the packet should be dropped, false otherwise
      */
-    const bool filter_line::trigger_filter(unsigned dest, unsigned src, Flow *f) {
+    const bool filter_line::trigger_filter(unsigned dest, unsigned src, Flow f) {
         //if filter doesn't have source defined, just check flow and dest
-        if (src_ip == 0 && *f == *flow && dest == dest_ip) {
+        if (src_ip == 0 && f == flow && dest == dest_ip) {
             return true;
             // If no flow is defined in filter, just check ips
-        } else if (flow == NULL && dest == dest_ip && src == src_ip) {
+        } else if (!hasFlow && dest == dest_ip && src == src_ip) {
             return true;
             //otherwise compare all three
-        } else return *flow == *f && dest == dest_ip && src == src_ip;
+        } else return flow == f && dest == dest_ip && src == src_ip;
     }
 }

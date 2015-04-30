@@ -11,14 +11,17 @@
 namespace aitf {
     class filter_line {
     public:
-        filter_line(unsigned dest, unsigned src = 0, Flow *f = NULL);
+        filter_line(unsigned dest, Flow f, unsigned src = 0);
 
-        const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
+        filter_line(unsigned dest, unsigned src = 0);
+
+        const bool trigger_filter(unsigned dest, unsigned src, Flow f);
 
     private:
         unsigned dest_ip;
         unsigned src_ip;
-        Flow *flow;
+        Flow flow;
+        bool hasFlow;
     };
 }
 

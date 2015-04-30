@@ -70,7 +70,8 @@ namespace aitf {
      * @param pkt the aitf request packet from the victim
      */
     AITFPacket nfq_router::handle_victim_request(unsigned int ip, AITFPacket *pkt) {/*{{{*/
-        //TODO add local filter
+        filter_line filt(pkt->getDest_ip(), pkt->get_flow(), pkt->getSrc_ip());
+        addFilter(filt);
         //TODO setup adding flow to packet
         unsigned short seq;
         char nonce[8];
@@ -152,6 +153,14 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Adds a new filter to the filter tables
+     * @param f the filter line to add
+     */
+    void nfq_router::addFilter(filter_line f) {
+        filters.push_back(f);
+    }
+
+/**
      * Adds the flow to a packet
      * @param old_payload the old packet
      * @param f the flow to add
@@ -261,7 +270,7 @@ namespace aitf {
      */
     bool nfq_router::check_filters(Flow *flow, unsigned dest, unsigned src) {/*{{{*/
         for (int i = 0; i < filters.size(); i++) {
-            if (filters[i].trigger_filter(dest, src, flow)) {
+            if (filters[i].trigger_filter(dest, src, *flow)) {
                 return true;
             }
         }

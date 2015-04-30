@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <iostream>
+#include <openssl/rand.h>
 #include "aitf_prot.h"
 #include "common.h"
 
@@ -108,11 +109,9 @@ namespace aitf {
         return nonce;
     }/*}}}*/
 
-    vector<int> AITFPacket::get_flow() {/*{{{*/
+    Flow AITFPacket::get_flow() {/*{{{*/
         //TODO does this need to handle the hashes too?
-        vector<int> ip_v(6);
-        for (int i = 0; i < 6; i++) ip_v[i] = flow.ips[i];
-        return ip_v;
+        return flow;
     }/*}}}*/
 
     void AITFPacket::set_values(unsigned m, unsigned short seq, char *n) {/*{{{*/
