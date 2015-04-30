@@ -75,6 +75,8 @@ namespace aitf {
 
         Flow flow;
 
+        unsigned dest_ip;
+
         unsigned int getSrc_ip() const {
             return src_ip;
         }
@@ -88,7 +90,6 @@ namespace aitf {
         unsigned mode;
         unsigned short sequence;
         unsigned src_ip;
-        unsigned dest_ip;
         char nonce[8];
 
         void set_mode(unsigned);
