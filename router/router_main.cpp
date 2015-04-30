@@ -12,9 +12,9 @@ int main(int argc, char *argv[]) {
     struct endhost e;
     if (strcmp(argv[1], "10.4.10.2") == 0) {
         e.ip = 17433610;
-        e.legacy = true;
-    } else if (strcmp(argv[1], "10.4.10.4") == 0) {
-        e.ip = 84542474;
+        e.legacy = false;
+    } else if (strcmp(argv[1], "10.4.10.3") == 0) {
+        e.ip = 67765258;
         e.legacy = true;
     } else if (strcmp(argv[1], "10.4.10.7") == 0) {
         e.ip = 101319690;

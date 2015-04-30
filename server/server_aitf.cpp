@@ -24,7 +24,6 @@ namespace aitf {
         char *sock_ip = "10.4.10.2";
         inet_aton(sock_ip, &addr.sin_addr);
         addr.sin_port = htons(AITF_PORT);
-        free(sock_ip);
         char *msg = req.serialize();
         if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
