@@ -73,7 +73,7 @@ namespace aitf {
      * @param ip the destination being bloack (or 0 if unknown)
      * @param pkt the aitf request packet from the victim
      */
-    AITFPacket nfq_router::handle_victim_request(unsigned int ip, AITFPacket *pkt) {/*{{{*/
+    AITFPacket nfq_router::handle_victim_request(AITFPacket *pkt) {/*{{{*/
         filter_line filt(pkt->getDest_ip(), pkt->get_flow(), pkt->getSrc_ip());
         addFilter(filt);
         //TODO setup adding flow to packet
@@ -107,26 +107,30 @@ namespace aitf {
 
         AITFPacket resp;
         int ret;
+        resp.dest_ip = pkt->getDest_ip();
+        resp.src_ip = pkt->src_ip;
         switch (pkt->get_mode()) {
             // TODO add way to receive a filtering request from a victim
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
-                seq_data[dest_ip] = pkt->get_seq();
-                nonce_data[dest_ip] = create_str(8);
-                strcpy(nonce_data[dest_ip], pkt->get_nonce());
+                seq_data[pkt->dest_ip] = pkt->get_seq();
+                nonce_data[pkt->dest_ip] = create_str(8);
+                strcpy(nonce_data[pkt->dest_ip], pkt->get_nonce());
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
-                if (seq_data[dest_ip] != (pkt->get_seq() - 1) || strcmp(nonce_data[dest_ip], pkt->get_nonce()) != 0)
-                    return clear_aitf_conn(qh, pkt_id, dest_ip);
+                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1) ||
+                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0)
+                    return clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_ACT:
                 // Validate sequence and nonce
-                if (seq_data[dest_ip] != (pkt->get_seq() - 1) || strcmp(nonce_data[dest_ip], pkt->get_nonce()) != 0)
-                    return clear_aitf_conn(qh, pkt_id, dest_ip);
+                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1) ||
+                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0)
+                    return clear_aitf_conn(qh, pkt_id, pkt->dest_ip);
                 // If receiving a third stage packet, add filter
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO change compliance modes here
@@ -136,15 +140,15 @@ namespace aitf {
                 // Request/action should have been taken
                 // Don't need to verify since packet requires no action and
                 // can therefore be dropped regardless, so just remove entries
-                free(nonce_data[dest_ip]);
-                seq_data.erase(dest_ip);
-                nonce_data.erase(dest_ip);
+                free(nonce_data[pkt->dest_ip]);
+                seq_data.erase(pkt->dest_ip);
+                nonce_data.erase(pkt->dest_ip);
                 ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
                 if (ret == -1) printf("Failed to set verdict\n");
                 return ret;
             case AITF_REQ:
                 //Request from victim gateway
-                resp = handle_victim_request(dest_ip, pkt);
+                resp = handle_victim_request(pkt);
                 break;
             default:
                 ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
