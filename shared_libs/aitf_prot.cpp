@@ -132,11 +132,6 @@ namespace aitf {
         return "";
     }/*}}}*/
 
-    int AITFPacket::get_size() {/*{{{*/
-        // TODO implement this
-        return 0;
-    }/*}}}*/
-
     // For initial connections in which we do not have values
     AITFPacket::AITFPacket() {/*{{{*/
     }/*}}}*/
