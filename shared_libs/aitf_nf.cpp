@@ -119,7 +119,9 @@ namespace aitf {
         if ((udp_info != NULL && dest_port == AITF_PORT)) { // TODO: Or destination address is one of my addresses
             unsigned int src_ip = ((struct iphdr*)payload)->saddr;
             unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
-            return nf->handle_aitf_pkt(qh, id, src_ip, dest_ip, NULL);
+            AITFPacket *pkt = new AITFPacket();
+            pkt->populate((char*)payload + sizeof(struct iphdr) + sizeof(udphdr));
+            return nf->handle_aitf_pkt(qh, id, src_ip, dest_ip, pkt);
         // If a flow is present
         } else {
             return nf->handlePacket(qh, id, pkt_size, payload, flow);

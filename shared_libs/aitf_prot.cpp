@@ -127,6 +127,22 @@ namespace aitf {
         set_nonce(n);
     }/*}}}*//*}}}*/
 
+    void AITFPacket::populate(char *s) {
+        int i;
+        char c[8];
+        memcpy(&i, s, sizeof(int));
+        set_mode(i);
+        memcpy(&i, s + sizeof(int), sizeof(int));
+        set_seq(i);
+        memcpy(c, s + sizeof(int) * 2, 8);
+        set_nonce(c);
+        memcpy(&i, s + sizeof(int) * 2 + 8, sizeof(int));
+        src_ip = i;
+        memcpy(&i, s + sizeof(int) * 3 + 8, sizeof(int));
+        dest_ip = i;
+        flow.populate((unsigned char*)s + sizeof(int) * 4 + 8);
+    }
+
     char* AITFPacket::serialize() {/*{{{*/
         char *s = create_str(sizeof(AITFPacket));
         memcpy(s, &mode, sizeof(int));
