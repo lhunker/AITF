@@ -2,6 +2,10 @@
 // Created by lhunker on 4/23/15.
 //
 
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include "nfq_router.h"
 #include "checksum.h"
 
@@ -85,7 +89,7 @@ namespace aitf {
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
-    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
+    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
         if (aitf_block.count(dest_ip)) {
             // If this address has been blocked, drop packet
             if (aitf_block[dest_ip]) {
@@ -148,7 +152,24 @@ namespace aitf {
         }
         // TODO send resp packet
         ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
-        if (ret == -1) printf("Failed to set verdict\n");
+        if (ret == -1) {printf("Failed to set verdict\n"); return ret;}
+
+        int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        unsigned char bytes[4];
+        bytes[0] = src_ip & 0xFF;
+        bytes[1] = (src_ip >> 8) & 0xFF;
+        bytes[2] = (src_ip >> 16) & 0xFF;
+        bytes[3] = (src_ip >> 24) & 0xFF;
+        char *sock_ip = create_str(20);
+        sprintf(sock_ip, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
+        inet_aton(sock_ip, &addr.sin_addr);
+        addr.sin_port = htons(AITF_PORT);
+        free(sock_ip);
+        char *msg = resp.serialize();
+        if (sendto(sock, msg, resp.get_size(), 0, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+            printf("Failed to send AITF response\n");
         return ret;
     }/*}}}*/
 

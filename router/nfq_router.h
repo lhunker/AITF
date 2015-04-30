@@ -40,7 +40,7 @@ namespace aitf {
 
         int handlePacket(struct nfq_q_handle*, int, int, unsigned char *, Flow *);
 
-        int handle_aitf_pkt(struct nfq_q_handle *, int, unsigned int, AITFPacket *);/*}}}*/
+        int handle_aitf_pkt(struct nfq_q_handle *, int, unsigned int, unsigned int, AITFPacket *);/*}}}*/
 
     private:/*{{{*/
         char *s_ip;

@@ -62,6 +62,8 @@ namespace aitf {
 
         void set_values(unsigned, unsigned short, char *);
 
+        int get_size();
+
         // Used to make a string for storing
         char *serialize();
 
