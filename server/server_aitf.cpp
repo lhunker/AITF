@@ -1,4 +1,5 @@
 #include "server_aitf.h"
+#include "../router/checksum.h"
 
 namespace aitf {
     Server::Server() {/*{{{*/
@@ -9,9 +10,9 @@ namespace aitf {
         delete flows;
     }/*}}}*/
 
-    int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, AITFPacket *pkt) {/*{{{*/
+    int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
-        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT_PACKET, 0, NULL);
+        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
     }/*}}}*/
 
     /**
@@ -19,17 +20,16 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    int Server::handlePacket(struct nfq_q_handle *qh, int pkt_id, unsigned char *payload, Flow *flow) {/*{{{*/
-        flows->add_flow(*flow);
-        if (flows->check_attack_threshold(*flow)) {
-            // TODO: send filter request
-        } else {
-            unsigned char *new_payload = create_ustr(strlen((char*)payload) - 64 - sizeof(Flow));
-            strncpy((char*)new_payload, (char*)payload, sizeof(struct iphdr));
-            strcpy((char*)new_payload, (char*)payload[sizeof(struct iphdr) + 64 + sizeof(Flow)]);
-            // TODO: reinsert new_payload as packet
-        }
-        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT_PACKET, 0, NULL);
+    int Server::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload,
+                             Flow *flow) {/*{{{*/
+//        flows->add_flow(*flow); //TODO put threshold check in add
+        unsigned char *new_pkt;
+        new_pkt = strip_rr(payload, pkt_size);
+        if (flow != NULL)
+            ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
+        int np_size = ntohs(((struct iphdr *) new_pkt)->tot_len);
+        compute_ip_checksum((struct iphdr *) new_pkt);
+        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
     }/*}}}*/
 
     FlowPaths::FlowPaths() {/*{{{*/
