@@ -30,12 +30,12 @@ namespace aitf {
         free(hashes[0]);
         hashes.pop_front();
         ips.push_back(ip);
-        hashes[5] = create_str(16);
-        strcpy(hashes[5], (hash));
+        hashes[5] = create_str(8);
+        memcpy(hashes[5], hash, 8);
     }/*}}}*/
 
     const bool Flow::operator==(const Flow &f) {/*{{{*/
-        for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i) || memcmp(hashes.at(i), f.hashes.at(i), 8) != 0) {return false;}}
+        for (int i = 0; i < 6; i++) {if (ips.at(i) != f.ips.at(i)) return false;}// || memcmp(hashes.at(i), f.hashes.at(i), 8) != 0) {return false;}}
         return true;
     }/*}}}*/
 
@@ -49,16 +49,16 @@ namespace aitf {
         int ip;
         // Split string into 12 x 32 bit chunks and copy into newly-created string variables
         for (int n = 0; n < 72; n += 12) {
-            char *hash = create_str(8);
             // Convert string version of integers to actual integers
             memcpy(&ip, (char *) data + n, 4);
 
             ips.pop_front();
             ips.push_back(ip);
 
-            memcpy(hash, (char *) data + n + 4, 8);
+            free(hashes[0]);
             hashes.pop_front();
-            hashes.push_back(hash);
+            hashes[5] = create_str(8);
+            memcpy(hashes[5], (char *) data + n + 4, 8);
         }
     }/*}}}*/
 

@@ -238,7 +238,7 @@ namespace aitf {
 
         unsigned char *new_pkt;
         // If in filters, drop it
-        if (check_filters(flow, dest_ip, src_ip)) {
+        if (check_filters(flow, (char*)hash, dest_ip, src_ip)) {
             return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
@@ -252,7 +252,7 @@ namespace aitf {
             new_pkt = update_pkt(payload, flow, pkt_size, pre);
             // Otherwise I am an intermediary router, so add myself as a hop
         } else {
-            flow->add_hop(ip, (char*)hash);
+            //flow->add_hop(ip, (char*)hash);
             unsigned char *tmp = strip_rr(payload, pkt_size);
             new_pkt = update_pkt(tmp, flow, pkt_size - FLOW_SIZE - 8, pre);
             free(tmp);
@@ -289,9 +289,10 @@ namespace aitf {
      * @param src the packet's source
      * @return true if packet should be dropped, false otherwise
      */
-    bool nfq_router::check_filters(Flow *flow, unsigned dest, unsigned src) {/*{{{*/
+    bool nfq_router::check_filters(Flow *flow, char *hash, unsigned dest, unsigned src) {/*{{{*/
+        flow->add_hop(ip, hash);
         for (int i = 0; i < filters.size(); i++) {
-            if (filters[i].trigger_filter(dest, src, *flow)) {
+            if (filters[i].trigger_filter(dest, src, flow)) {
                 return true;
             }
         }

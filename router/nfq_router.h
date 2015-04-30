@@ -60,7 +60,7 @@ namespace aitf {
 
         void update_key();
 
-        bool check_filters(Flow *f, unsigned dest, unsigned src);
+        bool check_filters(Flow *f, char *hash, unsigned dest, unsigned src);
 
         AITFPacket handle_victim_request(unsigned int, AITFPacket *);
 

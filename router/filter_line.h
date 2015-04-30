@@ -15,7 +15,7 @@ namespace aitf {
 
         filter_line(unsigned dest, unsigned src = 0);
 
-        const bool trigger_filter(unsigned dest, unsigned src, Flow f);
+        const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
 
     private:
         unsigned dest_ip;
