@@ -103,7 +103,14 @@ namespace aitf {
 
     unsigned AITFPacket::get_seq() {/*{{{*/
         return sequence;
-    }/*}}}*/
+    }
+
+    Flow::Flow(const Flow &f) {
+        ips = deque<int>(f.ips);
+        hashes = deque<char *>(f.hashes);
+    }
+
+/*}}}*/
 
     char* AITFPacket::get_nonce() {/*{{{*/
         return nonce;

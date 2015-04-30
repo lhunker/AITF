@@ -26,6 +26,7 @@ namespace aitf {
 
         Flow();
 
+        Flow(const Flow &f);
         void add_hop(int, char *);
 
         const bool operator==(const Flow &);
