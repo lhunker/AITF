@@ -120,6 +120,15 @@ namespace aitf {
         switch (pkt->get_mode()) {
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
+                unsigned char *s_d = create_ustr(15);
+                sprintf((char *) s_d, "%d\n", dest_ip);
+                unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char *) s_d), NULL, NULL);
+                Flow f = pkt->get_flow();
+                for (int i = 0; i < 6; i++) {
+                    if (f.ips[i] == ip && memcpy(f.hashes[i], hash, 8) != 0)
+                        clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
+                }
+
                 seq_data[pkt->dest_ip] = pkt->get_seq();
                 nonce_data[pkt->dest_ip] = create_str(8);
                 char nonce[8];
