@@ -39,8 +39,10 @@ namespace aitf {
 
         void debugPrint();
 
-    private:
         deque<char *> hashes;
+
+    private:
+
     };
 
     /*}}}*/
