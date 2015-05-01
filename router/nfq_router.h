@@ -63,7 +63,8 @@ namespace aitf {
         bool check_filters(Flow *f, char *hash, unsigned dest, unsigned src);
 
         void remove_filter(int);
-        void remove_filter(unsigned);
+
+        void remove_filter(unsigned dest, unsigned src);
 
         AITFPacket handle_victim_request(AITFPacket *);
 

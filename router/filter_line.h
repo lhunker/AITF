@@ -23,6 +23,10 @@ namespace aitf {
 
         const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
 
+        unsigned int getSrc_ip() const {
+            return src_ip;
+        }
+
         void setIps(unsigned dest, unsigned src = 0);
         void debugPrint();
 

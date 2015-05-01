@@ -165,7 +165,7 @@ namespace aitf {
                 // Request/action should have been taken
                 // Don't need to verify since packet requires no action and
                 // can therefore be dropped regardless, so just remove entries
-                remove_filter(pkt->dest_ip);
+                remove_filter(pkt->dest_ip, pkt->src_ip);
                 free(nonce_data[pkt->dest_ip]);
                 seq_data.erase(pkt->dest_ip);
                 nonce_data.erase(pkt->dest_ip);
@@ -338,9 +338,12 @@ namespace aitf {
      * Removes a filter based on destination IP
      * @param destination IP
      */
-    void nfq_router::remove_filter(unsigned dest) {
+    void nfq_router::remove_filter(unsigned dest, unsigned src) {
         for (int i = 0; i < filters.size(); i++) {
-            if (filters[i].get_dest() == dest) {filters.erase(filters.begin() + i); break;}
+            if (filters[i].get_dest() == dest && filters[i].getSrc_ip() == src) {
+                filters.erase(filters.begin() + i);
+                break;
+            }
         }
     }
 
