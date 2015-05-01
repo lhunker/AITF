@@ -368,11 +368,6 @@ namespace aitf {
     unsigned char *nfq_router::update_pkt(unsigned char *old_payload, Flow *f, int pkt_size, bool pre) {/*{{{*/
         unsigned char *new_payload = create_ustr(pkt_size + FLOW_SIZE + 8);
 
-        if (!pre) {
-            FILE *fp = fopen("caps/pre_mod", "w+");
-            for (int i = 0; i < pkt_size; i++) fputc(old_payload[i], fp);
-            fclose(fp);
-        }
 
         memcpy(new_payload, old_payload, sizeof(struct iphdr));
 
@@ -384,11 +379,6 @@ namespace aitf {
                pkt_size - sizeof(struct iphdr));
         ((struct iphdr *) new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
-        if (!pre) {
-            FILE *fp = fopen("caps/post_mod", "w+");
-            for (int i = 0; i < pkt_size + FLOW_SIZE + 8; i++) fputc(new_payload[i], fp);
-            fclose(fp);
-        }
 
         return new_payload;
     }/*}}}*/
@@ -409,11 +399,6 @@ namespace aitf {
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char *) s_d), NULL, NULL);
         free(s_d);
 
-        if (!pre) {
-            FILE *fp = fopen("caps/pre_handle", "w+");
-            for (int i = 0; i < pkt_size; i++) fputc(payload[i], fp);
-            fclose(fp);
-        }
 
         unsigned char *new_pkt;
         // If in filters, drop it
@@ -439,11 +424,6 @@ namespace aitf {
         int np_size = ntohs(((struct iphdr *) new_pkt)->tot_len);
         compute_ip_checksum((struct iphdr *) new_pkt);
 
-        if (!pre) {
-            FILE *fp = fopen("caps/post_handle", "w+");
-            for (int i = 0; i < np_size; i++) fputc(new_pkt[i], fp);
-            fclose(fp);
-        }
 
         int ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
         free(new_pkt);

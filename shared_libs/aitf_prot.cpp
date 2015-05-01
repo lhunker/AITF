@@ -10,11 +10,11 @@ using std::istringstream;
 
 namespace aitf {
     Flow::Flow() {/*{{{*/
-        ips = *(new deque<int>(6, 0));
-        hashes = *(new deque<char*>(6));
+        ips = deque<int>(6, 0);
+        hashes = deque<char *>(6);
         for (int i = 0; i < 6; i++) {
             hashes[i] = create_str(8);
-            strcpy(hashes[i], "00000000");
+            memcpy(hashes[i], "00000000", 8);
         }
     }/*}}}*/
 
@@ -62,8 +62,8 @@ namespace aitf {
             ips.pop_front();
             ips.push_back(ip);
 
-            hashes.pop_front();
             free(hashes[0]);
+            hashes.pop_front();
             hashes[5] = create_str(8);
             memcpy(hashes[5], (char *) data + n + 4, 8);
         }
@@ -80,7 +80,7 @@ namespace aitf {
         for (int i = 0; i < 6; i++) {
             int ip = ips[i];
             memcpy(tmp, &ip, 4);
-            sprintf(tmp + 4, "%s", hashes[i]);  //copy hash (8 bytes)
+            memcpy(tmp + 4, hashes[i], 8);  //copy hash (8 bytes)
             memcpy(out + 12 * i, tmp, 12);
         }
         free(tmp);
