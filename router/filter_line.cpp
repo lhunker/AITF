@@ -21,6 +21,14 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Gets destination IP
+     * @return dest ip
+     */
+    unsigned filter_line::get_dest() {/*{{{*/
+        return dest_ip;
+    }/*}}}*/
+
+    /**
      * Checks if the filter is still valid
      * @return true if filter is expired
      */

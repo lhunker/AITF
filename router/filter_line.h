@@ -20,6 +20,8 @@ namespace aitf {
 
         const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
 
+        unsigned get_dest();
+
         bool check_expire();
 
     private:

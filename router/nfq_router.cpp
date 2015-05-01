@@ -316,6 +316,24 @@ namespace aitf {
     }/*}}}*/
 
     /**
+     * Removes a filter based on array index
+     * @param filter index
+     */
+    void nfq_router::remove_filter(int index) {
+        filters.erase(filters.begin() + index);
+    }
+
+    /**
+     * Removes a filter based on destination IP
+     * @param destination IP
+     */
+    void nfq_router::remove_filter(unsigned dest) {
+        for (int i = 0; i < filters.size(); i++) {
+            if (filters[i].get_dest() == dest) {filters.erase(filters.begin() + i); break;}
+        }
+    }
+
+    /**
      * Check if received packet violates a filter
      * @param flow the packet's flow or NULL if no flow
      * @param dest the packet's destination
@@ -338,7 +356,7 @@ namespace aitf {
             }
         }
 
-        for (int i = 0; i < indexes.size(); i++) {filters.erase(filters.begin() + i);}
+        for (int i = 0; i < indexes.size(); i++) remove_filter(indexes[i]);
         return false;
     }/*}}}*/
 }
