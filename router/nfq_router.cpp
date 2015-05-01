@@ -76,7 +76,7 @@ namespace aitf {
      * @param pkt the aitf request packet from the victim
      */
     AITFPacket nfq_router::handle_victim_request(AITFPacket *pkt) {/*{{{*/
-        filter_line filt(pkt->getDest_ip(), pkt->get_flow(), pkt->getSrc_ip());
+        filter_line filt(pkt->getDest_ip(), pkt->get_flow(), true, pkt->getSrc_ip());
         addFilter(filt);
         //TODO setup adding flow to packet
         unsigned short seq;
@@ -158,7 +158,8 @@ namespace aitf {
                 // If receiving a third stage packet, add filter
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip());
+                //TODO put chek for legacy host here
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), false);
                 addFilter(filt);
                 break;
             case AITF_ACK:
@@ -391,6 +392,9 @@ namespace aitf {
 
             // If filter has expired
             if (filters[i].check_expire()) {
+                if (filters[i].get_temp()) {
+                    //TODO call escalte
+                }
                 // Insert entries into beginning of vector to avoid changing indices on removal
                 indexes.insert(indexes.begin(), i);
                 continue;

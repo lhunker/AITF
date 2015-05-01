@@ -16,9 +16,9 @@
 namespace aitf {
     class filter_line {
     public:
-        filter_line(unsigned dest, Flow f, unsigned src = 0);
+        filter_line(unsigned dest, Flow f, bool t, unsigned int src);
 
-        filter_line(unsigned dest, unsigned src = 0);
+        filter_line(unsigned dest, bool t, unsigned int src);
 
         filter_line();
 
@@ -28,7 +28,7 @@ namespace aitf {
             return src_ip;
         }
 
-        void setIps(unsigned dest, unsigned src = 0);
+        void setIps(unsigned dest, unsigned int src, bool t);
         void debugPrint();
 
         unsigned get_dest();
@@ -40,6 +40,7 @@ namespace aitf {
         bool is_active();
         void set_active(bool);
 
+        bool get_temp();
         int attack_time;
         int attack_count;
     private:
@@ -49,6 +50,7 @@ namespace aitf {
         unsigned src_ip;
         Flow flow;
         bool hasFlow;
+        bool temp;
     };
 }
 
