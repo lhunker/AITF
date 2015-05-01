@@ -19,8 +19,11 @@ namespace aitf {
 
         filter_line(unsigned dest, unsigned src = 0);
 
+        filter_line();
+
         const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
 
+        void setIps(unsigned dest, unsigned src = 0);
         void debugPrint();
 
         unsigned get_dest();

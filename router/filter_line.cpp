@@ -20,6 +20,12 @@ namespace aitf {
         create_time = time(NULL);
     }/*}}}*/
 
+    filter_line::filter_line() {
+        dest_ip = 0;
+        src_ip = 0;
+        hasFlow = false;
+        create_time = time(NULL);
+    }
     /**
      * Gets destination IP
      * @return dest ip
@@ -27,6 +33,13 @@ namespace aitf {
     unsigned filter_line::get_dest() {/*{{{*/
         return dest_ip;
     }/*}}}*/
+
+    void filter_line::setIps(unsigned dest, unsigned int src) {
+        dest_ip = dest;
+        src_ip = src;
+        hasFlow = false;
+        create_time = time(NULL);
+    }
 
     /**
      * Checks if the filter is still valid
@@ -50,12 +63,12 @@ namespace aitf {
      */
     const bool filter_line::trigger_filter(unsigned dest, unsigned src, Flow *f) {/*{{{*/
         //if filter doesn't have source defined, just check flow and dest
-        if (src_ip == 0 && *f == flow && dest == dest_ip) {
+        if (hasFlow && src_ip == 0 && *f == flow && dest == dest_ip) {
             return true;
             // If no flow is defined in filter, just check ips
         } else if (!hasFlow && dest == dest_ip && src == src_ip) {
             return true;
             //otherwise compare all three
-        } else return flow == *f && dest == dest_ip && src == src_ip;
+        } else return hasFlow && flow == *f && dest == dest_ip && src == src_ip;
     }/*}}}*/
 }

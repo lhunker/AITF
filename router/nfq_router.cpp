@@ -117,6 +117,7 @@ namespace aitf {
         resp.src_ip = pkt->src_ip;
         Flow f = pkt->get_flow();
         int request_dest_ip = 0;
+        filter_line filt;
         switch (pkt->get_mode()) {
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
@@ -147,14 +148,14 @@ namespace aitf {
                 // If receiving a third stage packet, add filter
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                // TODO Add filter
-//                filters.push_back(pkt->get_flow());
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip());
+                addFilter(filt);
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
                 // Don't need to verify since packet requires no action and
                 // can therefore be dropped regardless, so just remove entries
-                //TODO remove filter
+                remove_filter(pkt->dest_ip);
                 free(nonce_data[pkt->dest_ip]);
                 seq_data.erase(pkt->dest_ip);
                 nonce_data.erase(pkt->dest_ip);
@@ -271,7 +272,7 @@ namespace aitf {
 
         unsigned char *new_pkt;
         // If in filters, drop it
-        if (flow != NULL && check_filters(flow, (char *) hash, dest_ip, src_ip)) {
+        if (check_filters(flow, (char *) hash, dest_ip, src_ip)) {
             return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
@@ -341,7 +342,8 @@ namespace aitf {
      * @return true if packet should be dropped, false otherwise
      */
     bool nfq_router::check_filters(Flow *flow, char *hash, unsigned dest, unsigned src) {/*{{{*/
-        flow->add_hop(ip, hash);
+        if (flow != NULL)
+            flow->add_hop(ip, hash);
         vector<int> indexes;
         unsigned d_ip, s_ip;
         d_ip = htonl(dest);
@@ -353,7 +355,6 @@ namespace aitf {
                 indexes.insert(indexes.begin(), i);
                 continue;
             }
-            
             if (filters[i].trigger_filter(d_ip, s_ip, flow)) {
                 return true;
             }
