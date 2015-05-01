@@ -276,6 +276,7 @@ namespace aitf {
                 }
                 if (filters[i].attack_time + FILTER_DURATION < time(NULL)) {
                     filters[i].attack_count = 1;
+                    filters[i].attack_time = time(NULL);
                     filters[i].activate();
                     return;
                 }
@@ -314,7 +315,8 @@ namespace aitf {
                     }
                     if (filters[i].attack_count == 3) {
                         // TODO escalate
-                        // TODO make new filter
+                        filters[i].activate();
+                        // TODO make new filter - fixed above?
                     }
                 }
                 return;
