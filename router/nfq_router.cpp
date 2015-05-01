@@ -202,7 +202,7 @@ namespace aitf {
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 legacy = to_legacy_host(src_ip);
-                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), legacy);
                 addFilter(filt);
 
                 if (!legacy) {

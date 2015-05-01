@@ -17,6 +17,10 @@ namespace aitf {
     }/*}}}*/
 
     void FlowPaths::sendFilterRequest(Flow f, int ip) {
+        if (last_filter.find(ip) != last_filter.end() && last_filter[ip] + 1 >= time(NULL)) {
+            return;
+        }
+        last_filter[ip] = time(NULL);
         f.debugPrint();
 
         AITFPacket req(AITF_REQ, htonl(ip), f);

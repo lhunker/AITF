@@ -18,6 +18,7 @@
 #define FLOW_THRESHOLD 150
 #define PKT_TIMEOUT 1
 
+using std::map;
 namespace aitf {
     class FlowPaths {/*{{{*/
         public:
@@ -31,6 +32,7 @@ namespace aitf {
         vector<vector<unsigned> > src_ips;
         vector<vector<int> > pkt_count;
         vector<vector<int> > pkt_times;
+        map<unsigned, int> last_filter;
 
         void sendFilterRequest(Flow f, int ip);
 
@@ -53,7 +55,8 @@ namespace aitf {
         int handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow);
 
         private:
-            FlowPaths *flows;
+
+        FlowPaths *flows;
     };/*}}}*/
 }
 
