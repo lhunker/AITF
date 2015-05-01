@@ -227,9 +227,18 @@ namespace aitf {
             // If the filter matches
             if (filters[i].trigger_filter(f.get_dest(), f.getSrc_ip(), f.get_flow())) {
                 // Check filter expiration times, reset attack count if expired
-                if (filters[i].attack_time + FILTER_DURATION < time(NULL)) filters[i].attack_count = 1;
+                if (filters[i].is_active()) {
+                    return;     //we already have an active filter, do nothing
+                }
+                if (filters[i].attack_time + FILTER_DURATION < time(NULL)) {
+                    filters[i].attack_count = 1;
+                    filters[i].activate();
+                    return;
+                }
                 // Otherwise just increment
-                else filters[i].attack_count++;
+                else {
+                    filters[i].attack_count++;
+                }
 
                 // If over threshold for end hosts and gateways
                 if (filters[i].attack_count >= 2) {
@@ -242,6 +251,7 @@ namespace aitf {
                     }
                     if (filters[i].attack_count == 3) {
                         // TODO escalate
+                        //TODO make new filter
                     }
                 }
                 return;

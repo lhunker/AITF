@@ -88,6 +88,10 @@ namespace aitf {
         return temp;
     }
 
+    void filter_line::activate() {
+        active = true;
+    }
+
 /**
      * Checks if the filter is still valid
      * @return true if filter is expired

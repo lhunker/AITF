@@ -43,6 +43,8 @@ namespace aitf {
         bool get_temp();
         int attack_time;
         int attack_count;
+
+        void activate();
     private:
         bool active;
         int create_time;
