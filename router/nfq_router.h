@@ -62,6 +62,9 @@ namespace aitf {
 
         bool check_filters(Flow *f, char *hash, unsigned dest, unsigned src);
 
+        void remove_filter(int);
+        void remove_filter(unsigned);
+
         AITFPacket handle_victim_request(AITFPacket *);
 
         bool to_legacy_host(int ipIn);
