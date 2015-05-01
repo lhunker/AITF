@@ -27,14 +27,19 @@ namespace aitf {
     }/*}}}*/
 
     void FlowPaths::sendFilterRequest(Flow f, int ip) {/*{{{*/
-        struct timeval *tv;
-        gettimeofday(tv, NULL);
-        unsigned start_time = get_ms(tv);
-        printf("Filtering request sent at %u\n", start_time);
         if (last_filter.find(ip) != last_filter.end() && last_filter[ip] + 1 >= time(NULL)) {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            unsigned start_time = get_ms(&tv);
+
+            printf("Received attack-level traffic at %u\n", start_time);
             return;
         }
         last_filter[ip] = time(NULL);
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        unsigned start_time = get_ms(&tv);
+        printf("Filtering request sent at %u\n", start_time);
     
         f.debugPrint();
 
@@ -103,13 +108,6 @@ namespace aitf {
                         } else {
                             pkt_count[i][j]++;
 
-                            if (pkt_count[i][j] % 5 == 0) {
-                                struct timeval *tv;
-                                gettimeofday(tv, NULL);
-                                unsigned start_time = get_ms(tv);
-
-                                printf("Received attack-level traffic at %u\n", start_time);
-                            }
                             if (check_attack_thres_flow(i, j)) {
                                 sendFilterRequest(flow, src_ip);
                             }
