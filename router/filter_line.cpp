@@ -98,9 +98,9 @@ namespace aitf {
      */
     bool filter_line::check_expire() {/*{{{*/
         if (temp) {
-            return create_time + FILTER_EXPIRE < time(NULL);
+            return attack_time + FILTER_EXPIRE < time(NULL);
         } else {
-            return create_time + FILTER_DURATION < time(NULL);
+            return attack_time + FILTER_DURATION < time(NULL);
         }
 
     }

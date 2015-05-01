@@ -129,7 +129,7 @@ namespace aitf {
         unsigned char *s_d;
         int request_dest_ip = 0;
         filter_line filt;
-
+        bool legacy;
         //If not intended for me, forward
         bool mine = (htonl(ip) == dest_ip);
         for (int i = 0; i < subnet.size(); i++) {
@@ -183,26 +183,29 @@ namespace aitf {
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 //TODO put chek for legacy host here
-                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), false);
+                legacy = to_legacy_host(src_ip);
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
                 addFilter(filt);
 
-                // Send cease request to attacker
-                sock_ip = create_str(20);
-                bytes[3] = pkt->src_ip & 0xFF;
-                bytes[2] = (pkt->src_ip >> 8) & 0xFF;
-                bytes[1] = (pkt->src_ip >> 16) & 0xFF;
-                bytes[0] = (pkt->src_ip >> 24) & 0xFF;
-                sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+                if (!legacy) {
+                    // Send cease request to attacker
+                    sock_ip = create_str(20);
+                    bytes[3] = pkt->src_ip & 0xFF;
+                    bytes[2] = (pkt->src_ip >> 8) & 0xFF;
+                    bytes[1] = (pkt->src_ip >> 16) & 0xFF;
+                    bytes[0] = (pkt->src_ip >> 24) & 0xFF;
+                    sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
 
-                sock = socket(AF_INET, SOCK_DGRAM, 0);
-                addr.sin_family = AF_INET;
-                inet_aton(sock_ip, &addr.sin_addr);
-                addr.sin_port = htons(AITF_PORT);
-                free(sock_ip);
-                msg = cease.serialize();
-                msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
-                if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
-                    printf("Failed to send AITF cease\n");
+                    sock = socket(AF_INET, SOCK_DGRAM, 0);
+                    addr.sin_family = AF_INET;
+                    inet_aton(sock_ip, &addr.sin_addr);
+                    addr.sin_port = htons(AITF_PORT);
+                    free(sock_ip);
+                    msg = cease.serialize();
+                    msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+                    if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                        printf("Failed to send AITF cease\n");
+                }
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
@@ -281,7 +284,7 @@ namespace aitf {
                     filters[i].activate();
                     return;
                 }
-                // Otherwise just increment
+                    // Otherwise just increment
                 else {
                     filters[i].attack_count++;
                     filters[i].attack_time = time(NULL);
@@ -468,19 +471,54 @@ namespace aitf {
 
             // If filter has expired
             if (filters[i].check_expire()) {
+                printf("expired filter\n");
                 if (filters[i].get_temp()) {
-                    //TODO call escalte
+                    printf("escalate condition\n");
+                    bool insub = false;
+                    for (int i = 0; i < subnet.size(); i++) {
+                        if (subnet[i].ip == filters[i].getSrc_ip()) {
+                            insub = true;
+                        }
+                    }
+                    if (insub) {
+                        AITFPacket cease(7); //AITF_DISCONNECT
+                        char *sock_ip;
+                        unsigned char bytes[4];
+                        int sock;
+                        struct sockaddr_in addr;
+                        char *msg;
+                        int msg_size;
+                        // Send cease request to attacker
+                        sock_ip = create_str(20);
+                        bytes[3] = filters[i].getSrc_ip() & 0xFF;
+                        bytes[2] = (filters[i].getSrc_ip() >> 8) & 0xFF;
+                        bytes[1] = (filters[i].getSrc_ip() >> 16) & 0xFF;
+                        bytes[0] = (filters[i].getSrc_ip() >> 24) & 0xFF;
+                        sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+
+                        sock = socket(AF_INET, SOCK_DGRAM, 0);
+                        addr.sin_family = AF_INET;
+                        inet_aton(sock_ip, &addr.sin_addr);
+                        addr.sin_port = htons(AITF_PORT);
+                        free(sock_ip);
+                        msg = cease.serialize();
+                        msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+                        if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                            printf("Failed to send AITF cease\n");
                 }
+                    //TODO call escalte
+            }
                 // Insert entries into beginning of vector to avoid changing indices on removal
                 indexes.insert(indexes.begin(), i);
                 continue;
             }
             if (filters[i].trigger_filter(d_ip, s_ip, flow)) {
                 return true;
-            }
+        }
         }
 
-        for (int i = 0; i < indexes.size(); i++) remove_filter(indexes[i]);
+        for (int i = 0; i < indexes.size(); i++)
+            remove_filter(indexes[i]);
         return false;
     }/*}}}*/
 }
