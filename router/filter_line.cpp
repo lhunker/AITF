@@ -125,7 +125,7 @@ namespace aitf {
         if (hasFlow && src_ip == 0 && f != NULL && *f == flow && dest == dest_ip) {
             return true;
             // If no flow is defined in filter, just check ips
-        } else if (!hasFlow && dest == dest_ip && src == src_ip) {
+        } else if ((!hasFlow || f == NULL) && dest == dest_ip && src == src_ip) {
             return true;
             //otherwise compare all three
         } else return hasFlow && f != NULL && flow == *f && dest == dest_ip && src == src_ip;

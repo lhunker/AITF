@@ -227,8 +227,9 @@ namespace aitf {
                 break;
             case 6: //AITF_CEASE_ACK
                 for (int i = 0; i < filters.size(); i++) {
-                    if (filters[i].getSrc_ip() == src_ip)
+                    if (filters[i].getSrc_ip() == htonl(src_ip)) {
                         remove_filter(i);
+                    }
                 }
                 break;
             default:
@@ -269,27 +270,28 @@ namespace aitf {
         // For each filter
         for (int i = 0; i < filters.size(); i++) {
             // If the filter matches
-            if (filters[i].trigger_filter(f.get_dest(), f.getSrc_ip(), f.get_flow())) {
+            if (filters[i].get_dest() == f.get_dest() && f.getSrc_ip() == filters[i].getSrc_ip()) {
                 // Check filter expiration times, reset attack count if expired
                 if (filters[i].is_active()) {
                     return;     //we already have an active filter, do nothing
                 }
                 if (filters[i].attack_time + FILTER_DURATION < time(NULL)) {
                     filters[i].attack_count = 1;
+                    filters[i].attack_time = time(NULL);
                     filters[i].activate();
                     return;
                 }
                 // Otherwise just increment
                 else {
                     filters[i].attack_count++;
+                    filters[i].attack_time = time(NULL);
                 }
-
                 // If over threshold for end hosts and gateways
                 if (filters[i].attack_count >= 2) {
                     // Check if attacker is an endhost
                     for (int j = 0; j < subnet.size(); j++) {
-                        if (f.getSrc_ip() == subnet[j].ip) {
-                            AITFPacket resp(6); // AITF_DISCONNECT
+                        if (f.getSrc_ip() == htonl(subnet[j].ip)) {
+                            AITFPacket resp(7); // AITF_DISCONNECT
                             char *sock_ip = create_str(20);
                             char bytes[4];
                             bytes[3] = f.getSrc_ip() & 0xFF;
@@ -445,6 +447,7 @@ namespace aitf {
             }
         }
     }/*}}}*/
+
 
     /**
      * Check if received packet violates a filter
