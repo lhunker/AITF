@@ -78,7 +78,8 @@ namespace aitf {
     AITFPacket nfq_router::handle_victim_request(AITFPacket *pkt) {/*{{{*/
         filter_line filt(pkt->getDest_ip(), pkt->get_flow(), true, pkt->getSrc_ip());
         addFilter(filt);
-        //TODO setup adding flow to packet
+        //TODO setup adding flow to packet - pretty sure this is done because other things work
+        // but don't know where
         unsigned short seq;
         char nonce[8];
         RAND_bytes((unsigned char *) &seq, 2);
@@ -224,6 +225,12 @@ namespace aitf {
                     }
                 }
                 break;
+            case 6: //AITF_CEASE_ACK
+                for (int i = 0; i < filters.size(); i++) {
+                    if (filters[i].getSrc_ip() == src_ip)
+                        remove_filter(i);
+                }
+                break;
             default:
                 ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
                 if (ret == -1) printf("Failed to set verdict\n");
@@ -307,7 +314,7 @@ namespace aitf {
                     }
                     if (filters[i].attack_count == 3) {
                         // TODO escalate
-                        //TODO make new filter
+                        // TODO make new filter
                     }
                 }
                 return;
