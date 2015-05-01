@@ -62,8 +62,8 @@ namespace aitf {
             ips.pop_front();
             ips.push_back(ip);
 
-            free(hashes[0]);
             hashes.pop_front();
+            free(hashes[0]);
             hashes[5] = create_str(8);
             memcpy(hashes[5], (char *) data + n + 4, 8);
         }

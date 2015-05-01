@@ -162,6 +162,7 @@ namespace aitf {
                 memcpy(nonce_data[pkt->dest_ip], nonce, 8);
                 request_dest_ip = pkt->dest_ip;
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, nonce);
+                free(s_d);
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
@@ -382,6 +383,7 @@ namespace aitf {
         unsigned char *s_d = create_ustr(15);
         sprintf((char *) s_d, "%d\n", dest_ip);
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char *) s_d), NULL, NULL);
+        free(s_d);
 
         if (!pre) {
             FILE *fp = fopen("caps/pre_handle", "w+");
