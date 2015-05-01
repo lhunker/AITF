@@ -1,5 +1,8 @@
 #include "server_aitf.h"
+#include <sys/time.h>
 #include "../router/checksum.h"
+ 
+#define MAX_MS_IN_ONE_DAY 86400000
 
 namespace aitf {
     Server::Server() {/*{{{*/
@@ -10,17 +13,29 @@ namespace aitf {
         delete flows;
     }/*}}}*/
 
+    unsigned int get_ms(struct timeval *tv) {/*{{{*/
+        unsigned int time = (tv->tv_sec) * 1000;
+        time += (tv->tv_usec / 1000);
+        time = time % MAX_MS_IN_ONE_DAY;
+        return time;
+    }/*}}}*/
+
     int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip,
                                 AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
         return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
     }/*}}}*/
 
-    void FlowPaths::sendFilterRequest(Flow f, int ip) {
+    void FlowPaths::sendFilterRequest(Flow f, int ip) {/*{{{*/
+        struct timeval *tv;
+        gettimeofday(tv, NULL);
+        unsigned start_time = get_ms(tv);
+        printf("Filtering request sent at %u\n", start_time);
         if (last_filter.find(ip) != last_filter.end() && last_filter[ip] + 1 >= time(NULL)) {
             return;
         }
         last_filter[ip] = time(NULL);
+    
         f.debugPrint();
 
         AITFPacket req(AITF_REQ, htonl(ip), f);
@@ -35,7 +50,7 @@ namespace aitf {
         if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
         free(msg);
-    }
+    }/*}}}*/
 
     /**
      * Removes route record from packet and checks attack threshold
@@ -87,6 +102,14 @@ namespace aitf {
                             return;
                         } else {
                             pkt_count[i][j]++;
+
+                            if (pkt_count[i][j] % 5 == 0) {
+                                struct timeval *tv;
+                                gettimeofday(tv, NULL);
+                                unsigned start_time = get_ms(tv);
+
+                                printf("Received attack-level traffic at %u\n", start_time);
+                            }
                             if (check_attack_thres_flow(i, j)) {
                                 sendFilterRequest(flow, src_ip);
                             }
