@@ -455,8 +455,10 @@ namespace aitf {
 
     /**
      * Begin escalation process
+     * @param filt
+     * @param f
      */
-    void nfq_router::escalate(filter_line filt, Flow *f) {
+    void nfq_router::escalate(filter_line filt, Flow *f) {/*{{{*/
         if (f == NULL) {printf("No flow data! Cannot escalate!\n"); return;}
         int next_gw = 0;
         for (int i = 5; i >= 0; i--) {
@@ -464,10 +466,10 @@ namespace aitf {
             // Otherwise we have already tried this gateway, so remove it from the flow
             // since it won't be in the RR layer
             f->ips[i] = 0;
-            f->hashes[i] = 0;
+            strcpy(f->hashes[i], 0);
         }
 
-        if (!next_gw) {
+        if (!next_gw or next_gw == ip) {
             // TODO set local filter as permanent
         } else {
             AITFPacket esc(AITF_REQ);
@@ -495,7 +497,7 @@ namespace aitf {
             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                 printf("Failed to send AITF escalation\n");
         }
-    }
+    }/*}}}*/
 
     /**
      * Check if received packet violates a filter
