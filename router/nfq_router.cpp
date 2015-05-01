@@ -14,17 +14,19 @@ namespace aitf {
     nfq_router::nfq_router(vector<endhost> hostIn, char *str_ip) {/*{{{*/
         s_ip = create_str(15);
         strcpy(s_ip, str_ip);
-        unsigned int c1,c2,c3,c4;
-        sscanf(s_ip, "%d.%d.%d.%d",&c1,&c2,&c3,&c4);
-        ip = (unsigned int)c4+c3*256+c2*256*256+c1*256*256*256;
+        unsigned int c1, c2, c3, c4;
+        sscanf(s_ip, "%d.%d.%d.%d", &c1, &c2, &c3, &c4);
+        ip = (unsigned int) c4 + c3 * 256 + c2 * 256 * 256 + c1 * 256 * 256 * 256;
 
         subnet = vector<endhost>(hostIn);
 
         old_key = create_str(32);
         key = create_str(32);
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes((unsigned char*)key, 32);
-    }/*}}}*/
+        RAND_bytes((unsigned char *) key, 32);
+    }
+
+    /*}}}*/
 
     nfq_router::~nfq_router() {/*{{{*/
         free(s_ip);
@@ -38,7 +40,7 @@ namespace aitf {
     void nfq_router::update_key() {/*{{{*/
         strcpy(old_key, key);
         RAND_load_file("/dev/urandom", 1024);
-        RAND_bytes((unsigned char*)key, 32);
+        RAND_bytes((unsigned char *) key, 32);
     }/*}}}*/
 
     /**
@@ -91,7 +93,8 @@ namespace aitf {
      * Determine mode of AITF packet and respond, taking appropriate action
      * @param pkt
      */
-    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip, AITFPacket *pkt) {/*{{{*/
+    int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip,
+                                    AITFPacket *pkt) {/*{{{*/
         printf("Got AITF control message %d\n", pkt->get_mode());
         if (aitf_block.count(dest_ip)) {
             // If this address has been blocked, drop packet
@@ -111,6 +114,8 @@ namespace aitf {
         int ret;
         resp.dest_ip = pkt->getDest_ip();
         resp.src_ip = pkt->src_ip;
+        Flow f = pkt->get_flow();
+        int request_dest_ip = 0;
         switch (pkt->get_mode()) {
             // TODO add way to receive a filtering request from a victim
             case AITF_HELO:
@@ -118,6 +123,7 @@ namespace aitf {
                 seq_data[pkt->dest_ip] = pkt->get_seq();
                 nonce_data[pkt->dest_ip] = create_str(8);
                 strcpy(nonce_data[pkt->dest_ip], pkt->get_nonce());
+                request_dest_ip = pkt->dest_ip;
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
                 break;
             case AITF_CONF:
@@ -127,6 +133,8 @@ namespace aitf {
                     return clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
+
+                request_dest_ip = src_ip;
                 break;
             case AITF_ACT:
                 // Validate sequence and nonce
@@ -134,6 +142,7 @@ namespace aitf {
                     strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0)
                     return clear_aitf_conn(qh, pkt_id, pkt->dest_ip);
                 // If receiving a third stage packet, add filter
+                request_dest_ip = src_ip;
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 // TODO change compliance modes here
 //                filters.push_back(pkt->get_flow());
@@ -151,6 +160,12 @@ namespace aitf {
             case AITF_REQ:
                 //Request from victim gateway
                 resp = handle_victim_request(pkt);
+                for (int i = 0; i < 6; i++) {
+                    if (f.ips[i] != 0) {
+                        request_dest_ip = f.ips[i];
+                        break;
+                    }
+                }
                 break;
             default:
                 ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
@@ -159,24 +174,20 @@ namespace aitf {
         }
         // TODO send resp packet
         ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
-        if (ret == -1) {printf("Failed to set verdict\n"); return ret;}
+        if (ret == -1) {
+            printf("Failed to set verdict\n");
+            return ret;
+        }
 
-        int gateway_ip = 0;
+
         char *sock_ip = create_str(20);
         unsigned char bytes[4];
-        if (resp.get_mode() % 2 == 0) {
-            bytes[0] = pkt->dest_ip & 0xFF;
-            bytes[1] = (pkt->dest_ip >> 8) & 0xFF;
-            bytes[2] = (pkt->dest_ip >> 16) & 0xFF;
-            bytes[3] = (pkt->dest_ip >> 24) & 0xFF;
-            sprintf(sock_ip, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
-        } else {
-            bytes[0] = src_ip & 0xFF;
-            bytes[1] = (src_ip >> 8) & 0xFF;
-            bytes[2] = (src_ip >> 16) & 0xFF;
-            bytes[3] = (src_ip >> 24) & 0xFF;
-            sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
-        }
+        bytes[3] = request_dest_ip & 0xFF;
+        bytes[2] = (request_dest_ip >> 8) & 0xFF;
+        bytes[1] = (request_dest_ip >> 16) & 0xFF;
+        bytes[0] = (request_dest_ip >> 24) & 0xFF;
+        sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+
 
         int sock = socket(AF_INET, SOCK_DGRAM, 0);
         struct sockaddr_in addr;
@@ -186,7 +197,7 @@ namespace aitf {
         free(sock_ip);
         char *msg = resp.serialize();
         int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
-        if (sendto(sock, msg, msg_size, 0, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+        if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
         return ret;
     }/*}}}*/
@@ -221,9 +232,9 @@ namespace aitf {
         //for (int i = 0; i < FLOW_SIZE; i++) new_payload[sizeof(struct iphdr) + 8 + i] = fs[i];
         memcpy(new_payload + sizeof(struct iphdr) + 8, fs, FLOW_SIZE);
         free(fs);
-        printf("size: %lu\n", (pkt_size - sizeof(struct iphdr)));
-        memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr), pkt_size - sizeof(struct iphdr));
-        ((struct iphdr*)new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
+        memcpy(new_payload + sizeof(struct iphdr) + FLOW_SIZE + 8, old_payload + sizeof(struct iphdr),
+               pkt_size - sizeof(struct iphdr));
+        ((struct iphdr *) new_payload)->tot_len = htons(pkt_size + FLOW_SIZE + 8);
 
         if (!pre) {
             FILE *fp = fopen("caps/post_mod", "w+");
@@ -240,13 +251,14 @@ namespace aitf {
      * @param payload
      * @param flow
      */
-    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload, Flow *flow) {/*{{{*/
+    int nfq_router::handlePacket(struct nfq_q_handle *qh, int pkt_id, int pkt_size, unsigned char *payload,
+                                 Flow *flow) {/*{{{*/
         bool pre = (flow == NULL);
-        unsigned int src_ip = ((struct iphdr*)payload)->saddr;
-        unsigned int dest_ip = ((struct iphdr*)payload)->daddr;
+        unsigned int src_ip = ((struct iphdr *) payload)->saddr;
+        unsigned int dest_ip = ((struct iphdr *) payload)->daddr;
         unsigned char *s_d = create_ustr(15);
-        sprintf((char*)s_d, "%d\n", dest_ip);
-        unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char*)s_d), NULL, NULL);
+        sprintf((char *) s_d, "%d\n", dest_ip);
+        unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char *) s_d), NULL, NULL);
 
         if (!pre) {
             FILE *fp = fopen("caps/pre_handle", "w+");
@@ -256,7 +268,7 @@ namespace aitf {
 
         unsigned char *new_pkt;
         // If in filters, drop it
-        if (flow != NULL && check_filters(flow, (char*)hash, dest_ip, src_ip)) {
+        if (flow != NULL && check_filters(flow, (char *) hash, dest_ip, src_ip)) {
             return nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
             // If going to legacy host, discard RR record
         } else if (to_legacy_host(dest_ip)) {
@@ -265,7 +277,7 @@ namespace aitf {
                 ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
         } else if (flow == NULL) {
             flow = new Flow();
-            flow->add_hop(ip, (char*)hash);
+            flow->add_hop(ip, (char *) hash);
             // Insert a flow in the middle of the IP header and the rest of the packet
             new_pkt = update_pkt(payload, flow, pkt_size, pre);
             // Otherwise I am an intermediary router, so add myself as a hop
@@ -275,8 +287,8 @@ namespace aitf {
             new_pkt = update_pkt(tmp, flow, pkt_size - FLOW_SIZE - 8, pre);
             free(tmp);
         }
-        int np_size = ntohs(((struct iphdr*)new_pkt)->tot_len);
-        compute_ip_checksum((struct iphdr*)new_pkt);
+        int np_size = ntohs(((struct iphdr *) new_pkt)->tot_len);
+        compute_ip_checksum((struct iphdr *) new_pkt);
 
         if (!pre) {
             FILE *fp = fopen("caps/post_handle", "w+");

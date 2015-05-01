@@ -39,6 +39,13 @@ namespace aitf {
         return true;
     }/*}}}*/
 
+    void Flow::debugPrint() {
+        for (int i = 0; i < 6; i++) {
+            printf("%d - ", ips[i]);
+        }
+        printf("\n");
+    }
+
     /**
      * Populates a flow based off of a continuous data string
      * @param data

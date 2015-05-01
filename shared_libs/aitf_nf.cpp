@@ -77,7 +77,7 @@ namespace aitf {
 
         // Get packet ID and headers (protocol-appropriate)
         int id = ntohl(ph->packet_id);
-        printf("Got packet with id %d\n", id);
+        // printf("Got packet with id %d\n", id);
         unsigned char *payload;
         struct iphdr *ip_info = NULL;
         struct udphdr *udp_info = NULL;
@@ -98,7 +98,7 @@ namespace aitf {
                 }
 
                 flow = nf->extract_rr(payload);
-		        printf("%d\n", flow == NULL);
+                //printf("%d\n", flow == NULL);
                 // If one is not present
                 if (flow == NULL) {
                     // The addition here strips off the IP header

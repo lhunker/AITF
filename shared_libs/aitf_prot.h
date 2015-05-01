@@ -37,6 +37,8 @@ namespace aitf {
         // Used to create a Flow from a string
         void populate(unsigned char *);
 
+        void debugPrint();
+
     private:
         deque<char *> hashes;
     };
@@ -85,6 +87,7 @@ namespace aitf {
         unsigned int getDest_ip() const {
             return dest_ip;
         }
+
 
     private:
         //TODO add dest ip to block?

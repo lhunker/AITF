@@ -17,6 +17,7 @@ namespace aitf {
     }/*}}}*/
 
     void FlowPaths::sendFilterRequest(Flow f, int ip) {
+        f.debugPrint();
         AITFPacket req(AITF_REQ, ip, f);
         int sock = socket(AF_INET, SOCK_DGRAM, 0);
         struct sockaddr_in addr;
