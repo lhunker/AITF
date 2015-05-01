@@ -220,9 +220,13 @@ namespace aitf {
      * Adds a new filter to the filter tables
      * @param f the filter line to add
      */
-    void nfq_router::addFilter(filter_line f) {
+    void nfq_router::addFilter(filter_line f) {/*{{{*/
+        for (int i = 0; i < filters.size(); i++) {
+            if (filters[i].trigger_filter(f.get_dest(), f.getSrc_ip(), f.get_flow()))
+                return;
+        }
         filters.push_back(f);
-    }
+    }/*}}}*/
 
 /**
      * Adds the flow to a packet
@@ -330,22 +334,22 @@ namespace aitf {
      * Removes a filter based on array index
      * @param filter index
      */
-    void nfq_router::remove_filter(int index) {
-        filters.erase(filters.begin() + index);
-    }
+    void nfq_router::remove_filter(int index) {/*{{{*/
+        filters[index].set_active(false);
+    }/*}}}*/
 
     /**
      * Removes a filter based on destination IP
      * @param destination IP
      */
-    void nfq_router::remove_filter(unsigned dest, unsigned src) {
+    void nfq_router::remove_filter(unsigned dest, unsigned src) {/*{{{*/
         for (int i = 0; i < filters.size(); i++) {
             if (filters[i].get_dest() == dest && filters[i].getSrc_ip() == src) {
-                filters.erase(filters.begin() + i);
+                filters[i].set_active(false);
                 break;
             }
         }
-    }
+    }/*}}}*/
 
     /**
      * Check if received packet violates a filter
@@ -362,6 +366,8 @@ namespace aitf {
         d_ip = htonl(dest);
         s_ip = htonl(src);
         for (int i = 0; i < filters.size(); i++) {
+            if (!filters[i].is_active()) continue;
+
             // If filter has expired
             if (filters[i].check_expire()) {
                 // Insert entries into beginning of vector to avoid changing indices on removal

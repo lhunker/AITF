@@ -32,9 +32,14 @@ namespace aitf {
 
         unsigned get_dest();
 
+        Flow* get_flow();
+
         bool check_expire();
 
+        bool is_active();
+        void set_active(bool);
     private:
+        bool active;
         int create_time;
         unsigned dest_ip;
         unsigned src_ip;

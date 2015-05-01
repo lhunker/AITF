@@ -11,6 +11,7 @@ namespace aitf {
         flow = f;
         hasFlow = true;
         create_time = time(NULL);
+        active = true;
     }/*}}}*/
 
     filter_line::filter_line(unsigned dest, unsigned src) {/*{{{*/
@@ -18,14 +19,41 @@ namespace aitf {
         src_ip = src;
         hasFlow = false;
         create_time = time(NULL);
+        active = true;
     }/*}}}*/
 
-    filter_line::filter_line() {
+    filter_line::filter_line() {/*{{{*/
         dest_ip = 0;
         src_ip = 0;
         hasFlow = false;
         create_time = time(NULL);
-    }
+        active = true;
+    }/*}}}*/
+
+    /**
+     * Returns active state
+     * @return true if active
+     */
+    bool filter_line::is_active() {/*{{{*/
+        return active;
+    }/*}}}*/
+
+    /**
+     * Sets active state
+     * @param a active state
+     */
+    void filter_line::set_active(bool a) {/*{{{*/
+        active = a;
+    }/*}}}*/
+
+    /**
+     * Gets flow
+     * @return flow
+     */
+    Flow* filter_line::get_flow() {/*{{{*/
+        return &flow;
+    }/*}}}*/
+
     /**
      * Gets destination IP
      * @return dest ip
@@ -34,12 +62,12 @@ namespace aitf {
         return dest_ip;
     }/*}}}*/
 
-    void filter_line::setIps(unsigned dest, unsigned int src) {
+    void filter_line::setIps(unsigned dest, unsigned int src) {/*{{{*/
         dest_ip = dest;
         src_ip = src;
         hasFlow = false;
         create_time = time(NULL);
-    }
+    }/*}}}*/
 
     /**
      * Checks if the filter is still valid
@@ -49,10 +77,10 @@ namespace aitf {
         return create_time + FILTER_EXPIRE < time(NULL);
     }/*}}}*/
 
-    void filter_line::debugPrint() {
+    void filter_line::debugPrint() {/*{{{*/
         flow.debugPrint();
         printf("Filter src: %u, Filter dest: %u\n", src_ip, dest_ip);
-    }
+    }/*}}}*/
 
     /**
      * Checks whether a given dest ip, src ip and flow are triggered by this filter
@@ -62,6 +90,7 @@ namespace aitf {
      * @return true if the packet should be dropped, false otherwise
      */
     const bool filter_line::trigger_filter(unsigned dest, unsigned src, Flow *f) {/*{{{*/
+        if (!is_active()) {return false;}
         //if filter doesn't have source defined, just check flow and dest
         if (hasFlow && src_ip == 0 && *f == flow && dest == dest_ip) {
             return true;
