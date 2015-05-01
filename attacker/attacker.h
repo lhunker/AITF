@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include "../shared_libs/aitf_nf.h"
 #include "../shared_libs/aitf_prot.h"
 #include "../shared_libs/common.h"
@@ -27,12 +28,6 @@ namespace aitf {
             void start();
 
             void fire_lazor();
-
-            void start_attack();
-
-            void stop_attack();
-            
-            void sleep_attack();
 
             int handle_aitf_pkt(struct nfq_q_handle *, int, unsigned int, unsigned int, AITFPacket *pkt);
 
