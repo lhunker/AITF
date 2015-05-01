@@ -204,6 +204,7 @@ namespace aitf {
                     msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                     if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                         printf("Failed to send AITF cease\n");
+                    free(msg);
                 }
                 break;
             case AITF_ACK:
@@ -263,6 +264,7 @@ namespace aitf {
         msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
+        free(msg);
         return ret;
     }/*}}}*/
 
@@ -314,6 +316,7 @@ namespace aitf {
                             int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                                 printf("Failed to send disconnect message\n");
+                            free(msg);
 
                             return;
                         }
@@ -496,6 +499,7 @@ namespace aitf {
             int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                 printf("Failed to send AITF escalation\n");
+            free(msg);
         }
     }/*}}}*/
 
@@ -552,6 +556,7 @@ namespace aitf {
                         msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
+                        free(msg)l
                 }
                 
                 escalate(filters[i], flow);

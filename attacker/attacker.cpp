@@ -63,6 +63,7 @@ namespace aitf {
             int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                 printf("Failed to send AITF response\n");
+            free(msg);
         }
 
         switch (pkt->get_mode()) {

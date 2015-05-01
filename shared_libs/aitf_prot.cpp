@@ -164,6 +164,7 @@ namespace aitf {
         memcpy(s + sizeof(int) * 3 + sizeof(nonce), &dest_ip, sizeof(int));
         char *fs = flow.serialize();
         memcpy(s + sizeof(int) * 4 + sizeof(nonce), fs, FLOW_SIZE);
+        free(fs);
         return s;
     }/*}}}*/
 

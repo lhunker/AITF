@@ -29,6 +29,7 @@ namespace aitf {
         char *msg = req.serialize();
         if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
+        free(msg);
     }
 
     /**
