@@ -8,6 +8,7 @@ namespace aitf {
     void* Attacker::start_func(void *This) {((Attacker *)This)->start(); return NULL;}
 
     void Attacker::start() {
+        int count = 0;
         printf("IMMA FIRIN MAH LAZOR\n");
         while (1) {
             int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -22,7 +23,10 @@ namespace aitf {
             char *msg = "TROLLLLLLOLOLOLOL";
             int msg_size = strlen(msg);
             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
-                printf("Failed to send UDP flood message\n");
+                printf("Failed to send UDP flood message %d\n", ++count);
+            else
+                printf("sent %d\n", count++);
+            usleep(5000);
         }
     }
 

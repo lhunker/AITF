@@ -128,6 +128,21 @@ namespace aitf {
         unsigned char *s_d;
         int request_dest_ip = 0;
         filter_line filt;
+
+        //If not intended for me, forward
+        bool mine = (htonl(ip) == dest_ip);
+        for (int i = 0; i < subnet.size(); i++) {
+            if (subnet[i].ip == dest_ip) {
+                mine = true;
+            }
+        }
+        if (!mine) {
+            ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
+            if (ret == -1) printf("Failed to set verdict\n");
+            return ret;
+        }
+
+
         switch (pkt->get_mode()) {
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
