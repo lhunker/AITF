@@ -203,7 +203,6 @@ namespace aitf {
         bytes[0] = (request_dest_ip >> 24) & 0xFF;
         sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
 
-
         int sock = socket(AF_INET, SOCK_DGRAM, 0);
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;
