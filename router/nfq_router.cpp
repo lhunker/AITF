@@ -324,11 +324,21 @@ namespace aitf {
      */
     bool nfq_router::check_filters(Flow *flow, char *hash, unsigned dest, unsigned src) {/*{{{*/
         flow->add_hop(ip, hash);
+        vector<int> indexes;
         for (int i = 0; i < filters.size(); i++) {
+            // If filter has expired
+            if (filters[i].check_expire()) {
+                // Insert entries into beginning of vector to avoid changing indices on removal
+                indexes.insert(indexes.begin(), i);
+                continue;
+            }
+
             if (filters[i].trigger_filter(dest, src, flow)) {
                 return true;
             }
         }
+
+        for (int i = 0; i < indexes.size(); i++) {filters.erase(filters.begin() + i);}
         return false;
     }/*}}}*/
 }
