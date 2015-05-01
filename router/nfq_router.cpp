@@ -122,9 +122,11 @@ namespace aitf {
                 // If received the first stage, send back sequence +1 and same nonce
                 seq_data[pkt->dest_ip] = pkt->get_seq();
                 nonce_data[pkt->dest_ip] = create_str(8);
-                strcpy(nonce_data[pkt->dest_ip], pkt->get_nonce());
+                char nonce[8];
+                RAND_bytes((unsigned char *) nonce, 8);
+                strcpy(nonce_data[pkt->dest_ip], nonce);
                 request_dest_ip = pkt->dest_ip;
-                resp.set_values(AITF_CONF, pkt->get_seq() + 1, pkt->get_nonce());
+                resp.set_values(AITF_CONF, pkt->get_seq() + 1, nonce);
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
