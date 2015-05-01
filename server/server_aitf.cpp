@@ -26,7 +26,7 @@ namespace aitf {
         return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
     }/*}}}*/
 
-    void FlowPaths::sendFilterRequest(Flow f, int ip) {
+    void FlowPaths::sendFilterRequest(Flow f, int ip) {/*{{{*/
         struct timeval *tv;
         gettimeofday(tv, NULL);
         unsigned start_time = get_ms(tv);
@@ -45,7 +45,7 @@ namespace aitf {
         if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
         free(msg);
-    }
+    }/*}}}*/
 
     /**
      * Removes route record from packet and checks attack threshold
@@ -97,6 +97,14 @@ namespace aitf {
                             return;
                         } else {
                             pkt_count[i][j]++;
+
+                            if (pkt_count[i][j] % 5 == 0) {
+                                struct timeval *tv;
+                                gettimeofday(tv, NULL);
+                                unsigned start_time = get_ms(tv);
+
+                                printf("Received attack-level traffic at %u\n", start_time);
+                            }
                             if (check_attack_thres_flow(i, j)) {
                                 sendFilterRequest(flow, src_ip);
                             }
