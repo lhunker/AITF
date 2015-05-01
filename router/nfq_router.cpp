@@ -111,6 +111,14 @@ namespace aitf {
             aitf_block[dest_ip] = 0;
         }
 
+        AITFPacket cease(5); //AITF_CEASE
+        char *sock_ip;
+        unsigned char bytes[4];
+        int sock;
+        struct sockaddr_in addr;
+        char *msg;
+        int msg_size;
+
         AITFPacket resp;
         int ret;
         resp.dest_ip = pkt->getDest_ip();
@@ -161,6 +169,24 @@ namespace aitf {
                 //TODO put chek for legacy host here
                 filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), false);
                 addFilter(filt);
+
+                // Send cease request to attacker
+                sock_ip = create_str(20);
+                bytes[3] = pkt->src_ip & 0xFF;
+                bytes[2] = (pkt->src_ip >> 8) & 0xFF;
+                bytes[1] = (pkt->src_ip >> 16) & 0xFF;
+                bytes[0] = (pkt->src_ip >> 24) & 0xFF;
+                sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+
+                sock = socket(AF_INET, SOCK_DGRAM, 0);
+                addr.sin_family = AF_INET;
+                inet_aton(sock_ip, &addr.sin_addr);
+                addr.sin_port = htons(AITF_PORT);
+                free(sock_ip);
+                msg = cease.serialize();
+                msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+                if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                    printf("Failed to send AITF cease\n");
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
@@ -188,29 +214,26 @@ namespace aitf {
                 if (ret == -1) printf("Failed to set verdict\n");
                 return ret;
         }
-        // TODO send resp packet
         ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
         if (ret == -1) {
             printf("Failed to set verdict\n");
             return ret;
         }
 
-        char *sock_ip = create_str(20);
-        unsigned char bytes[4];
+        sock_ip = create_str(20);
         bytes[3] = request_dest_ip & 0xFF;
         bytes[2] = (request_dest_ip >> 8) & 0xFF;
         bytes[1] = (request_dest_ip >> 16) & 0xFF;
         bytes[0] = (request_dest_ip >> 24) & 0xFF;
         sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
 
-        int sock = socket(AF_INET, SOCK_DGRAM, 0);
-        struct sockaddr_in addr;
+        sock = socket(AF_INET, SOCK_DGRAM, 0);
         addr.sin_family = AF_INET;
         inet_aton(sock_ip, &addr.sin_addr);
         addr.sin_port = htons(AITF_PORT);
         free(sock_ip);
-        char *msg = resp.serialize();
-        int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+        msg = resp.serialize();
+        msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
         return ret;
