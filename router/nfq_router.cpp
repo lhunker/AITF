@@ -182,7 +182,6 @@ namespace aitf {
                 // If receiving a third stage packet, add filter
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                //TODO put chek for legacy host here
                 legacy = to_legacy_host(src_ip);
                 filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
                 addFilter(filt);
@@ -245,6 +244,8 @@ namespace aitf {
             printf("Failed to set verdict\n");
             return ret;
         }
+
+        filt.last_gw = request_dest_ip;
 
         sock_ip = create_str(20);
         bytes[3] = request_dest_ip & 0xFF;
@@ -318,7 +319,7 @@ namespace aitf {
                         }
                     }
                     if (filters[i].attack_count == 3) {
-                        // TODO escalate
+                        escalate(f, f.get_flow());
                         filters[i].activate();
                         // TODO make new filter - fixed above?
                     }
@@ -452,6 +453,49 @@ namespace aitf {
         }
     }/*}}}*/
 
+    /**
+     * Begin escalation process
+     */
+    void nfq_router::escalate(filter_line filt, Flow *f) {
+        if (f == NULL) {printf("No flow data! Cannot escalate!\n"); return;}
+        int next_gw = 0;
+        for (int i = 5; i >= 0; i--) {
+            if (f->ips[i] == filt.last_gw && i != 0) {next_gw = f->ips[i - 1]; break;}
+            // Otherwise we have already tried this gateway, so remove it from the flow
+            // since it won't be in the RR layer
+            f->ips[i] = 0;
+            f->hashes[i] = 0;
+        }
+
+        if (!next_gw) {
+            // TODO set local filter as permanent
+        } else {
+            AITFPacket esc(AITF_REQ);
+            vector<int> pkt_ips(6);
+            for (int i = 0; i < 6; i++) pkt_ips[i] = f->ips[i];
+            esc.set_flow(pkt_ips);
+            esc.src_ip = filt.getSrc_ip();
+            esc.dest_ip = filt.get_dest();
+            char *sock_ip = create_str(20);
+            char bytes[4];
+            bytes[3] = next_gw & 0xFF;
+            bytes[2] = (next_gw >> 8) & 0xFF;
+            bytes[1] = (next_gw >> 16) & 0xFF;
+            bytes[0] = (next_gw >> 24) & 0xFF;
+            sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+
+            int sock = socket(AF_INET, SOCK_DGRAM, 0);
+            struct sockaddr_in addr;
+            addr.sin_family = AF_INET;
+            inet_aton(sock_ip, &addr.sin_addr);
+            addr.sin_port = htons(AITF_PORT);
+            free(sock_ip);
+            char *msg = esc.serialize();
+            int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+            if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                printf("Failed to send AITF escalation\n");
+        }
+    }
 
     /**
      * Check if received packet violates a filter
@@ -507,7 +551,8 @@ namespace aitf {
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
                 }
-                    //TODO call escalte
+                
+                escalate(filters[i], flow);
             }
                 // Insert entries into beginning of vector to avoid changing indices on removal
                 indexes.insert(indexes.begin(), i);

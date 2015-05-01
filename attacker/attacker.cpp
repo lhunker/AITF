@@ -83,7 +83,7 @@ namespace aitf {
                 }
                 break;
             case AITF_DISCONNECT:
-                printf("You sunk my battleship\n");
+                printf("yOU SUNK MY BATTLESHIP\n");
                 pthread_cancel(attack);
                 exit(0);
                 break;

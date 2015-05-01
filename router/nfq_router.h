@@ -62,6 +62,8 @@ namespace aitf {
 
         bool check_filters(Flow *f, char *hash, unsigned dest, unsigned src);
 
+        void escalate(filter_line, Flow*);
+
         void remove_filter(int);
 
         void remove_filter(unsigned dest, unsigned src);

@@ -40,6 +40,7 @@ namespace aitf {
         bool is_active();
         void set_active(bool);
 
+        int last_gw;
         bool get_temp();
         int attack_time;
         int attack_count;

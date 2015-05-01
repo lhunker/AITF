@@ -84,13 +84,13 @@ namespace aitf {
         temp = t;
     }/*}}}*/
 
-    bool filter_line::get_temp() {
+    bool filter_line::get_temp() {/*{{{*/
         return temp;
-    }
+    }/*}}}*/
 
-    void filter_line::activate() {
+    void filter_line::activate() {/*{{{*/
         active = true;
-    }
+    }/*}}}*/
 
 /**
      * Checks if the filter is still valid

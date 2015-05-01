@@ -135,6 +135,10 @@ namespace aitf {
         set_nonce(n);
     }/*}}}*//*}}}*/
 
+    void AITFPacket::set_flow(vector<int> f_ips) {
+        for (int i = 0; i < 6; i++) flow.ips[i] = f_ips[i];
+    }
+
     void AITFPacket::populate(char *s) {/*{{{*/
         int i;
         char c[8];
