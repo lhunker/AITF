@@ -466,7 +466,7 @@ namespace aitf {
             // Otherwise we have already tried this gateway, so remove it from the flow
             // since it won't be in the RR layer
             f->ips[i] = 0;
-            strcpy(f->hashes[i], 0);
+            strcpy(f->hashes[i], "00000000");
         }
 
         if (!next_gw or next_gw == ip) {
