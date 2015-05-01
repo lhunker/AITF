@@ -18,6 +18,11 @@ namespace aitf {
         hasFlow = false;
     }
 
+    void filter_line::debugPrint() {
+        flow.debugPrint();
+        printf("Filter src: %u, Filter dest: %u\n", src_ip, dest_ip);
+    }
+
     /**
      * Checks whether a given dest ip, src ip and flow are triggered by this filter
      * @param dest the destination ip address of the packet

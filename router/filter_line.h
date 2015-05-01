@@ -7,6 +7,7 @@
 
 #include "../shared_libs/aitf_prot.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 namespace aitf {
     class filter_line {
@@ -16,6 +17,8 @@ namespace aitf {
         filter_line(unsigned dest, unsigned src = 0);
 
         const bool trigger_filter(unsigned dest, unsigned src, Flow *f);
+
+        void debugPrint();
 
     private:
         unsigned dest_ip;

@@ -124,7 +124,7 @@ namespace aitf {
                 nonce_data[pkt->dest_ip] = create_str(8);
                 char nonce[8];
                 RAND_bytes((unsigned char *) nonce, 8);
-                strcpy(nonce_data[pkt->dest_ip], nonce);
+                memcpy(nonce_data[pkt->dest_ip], nonce, 8);
                 request_dest_ip = pkt->dest_ip;
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, nonce);
                 break;
@@ -141,7 +141,7 @@ namespace aitf {
             case AITF_ACT:
                 // Validate sequence and nonce
                 if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 2) ||
-                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0) {
+                        memcmp(nonce_data[pkt->dest_ip], pkt->get_nonce(), 8) != 0) {
                     return clear_aitf_conn(qh, pkt_id, pkt->dest_ip);
                 }
                 // If receiving a third stage packet, add filter
@@ -324,8 +324,11 @@ namespace aitf {
      */
     bool nfq_router::check_filters(Flow *flow, char *hash, unsigned dest, unsigned src) {/*{{{*/
         flow->add_hop(ip, hash);
+        unsigned d_ip, s_ip;
+        d_ip = htonl(dest);
+        s_ip = htonl(src);
         for (int i = 0; i < filters.size(); i++) {
-            if (filters[i].trigger_filter(dest, src, flow)) {
+            if (filters[i].trigger_filter(d_ip, s_ip, flow)) {
                 return true;
             }
         }
