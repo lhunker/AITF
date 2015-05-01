@@ -221,9 +221,30 @@ namespace aitf {
      * @param f the filter line to add
      */
     void nfq_router::addFilter(filter_line f) {/*{{{*/
+        // For each filter
         for (int i = 0; i < filters.size(); i++) {
-            if (filters[i].trigger_filter(f.get_dest(), f.getSrc_ip(), f.get_flow()))
+            // If the filter matches
+            if (filters[i].trigger_filter(f.get_dest(), f.getSrc_ip(), f.get_flow())) {
+                // Check filter expiration times, reset attack count if expired
+                if (filters[i].attack_time + FILTER_DURATION < time(NULL)) filters[i].attack_count = 1;
+                // Otherwise just increment
+                else filters[i].attack_count++;
+
+                // If over threshold for end hosts and gateways
+                if (filters[i].attack_count >= 2) {
+                    // Check if attacker is an endhost
+                    for (int j = 0; j < subnet.size(); j++) {
+                        if (f.getSrc_ip() == subnet[j].ip) {
+                            // TODO disconnect endhost
+                            return;
+                        }
+                    }
+                    if (filters[i].attack_count == 3) {
+                        // TODO escalate
+                    }
+                }
                 return;
+            }
         }
         filters.push_back(f);
     }/*}}}*/

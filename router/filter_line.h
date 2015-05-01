@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 #define FILTER_EXPIRE 10
+#define FILTER_DURATION 30
 
 namespace aitf {
     class filter_line {
@@ -38,6 +39,9 @@ namespace aitf {
 
         bool is_active();
         void set_active(bool);
+
+        int attack_time;
+        int attack_count;
     private:
         bool active;
         int create_time;

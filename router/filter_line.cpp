@@ -12,6 +12,8 @@ namespace aitf {
         hasFlow = true;
         create_time = time(NULL);
         active = true;
+        attack_count = 1;
+        attack_time = time(NULL);
     }/*}}}*/
 
     filter_line::filter_line(unsigned dest, unsigned src) {/*{{{*/
@@ -20,6 +22,8 @@ namespace aitf {
         hasFlow = false;
         create_time = time(NULL);
         active = true;
+        attack_count = 1;
+        attack_time = time(NULL);
     }/*}}}*/
 
     filter_line::filter_line() {/*{{{*/
@@ -28,6 +32,8 @@ namespace aitf {
         hasFlow = false;
         create_time = time(NULL);
         active = true;
+        attack_count = 1;
+        attack_time = time(NULL);
     }/*}}}*/
 
     /**
