@@ -421,7 +421,10 @@ namespace aitf {
             fclose(fp);
         }
 
-        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        int ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        free(new_pkt);
+        if (ret == -1) printf("Failed to set verdict\n");
+        return ret;
     }/*}}}*/
 
     /**
@@ -558,7 +561,7 @@ namespace aitf {
                         msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
-                        free(msg)l
+                        free(msg);
                 }
                 
                 escalate(filters[i], flow);
@@ -577,5 +580,3 @@ namespace aitf {
         return false;
     }/*}}}*/
 }
-
-
