@@ -115,7 +115,11 @@ namespace aitf {
 
     Flow::Flow(const Flow &f) {
         ips = deque<int>(f.ips);
-        hashes = deque<char *>(f.hashes);
+        hashes = deque<char *>(6);
+        for (int i = 0; i < 6; i++) {
+            hashes[i] = create_str(8);
+            memcpy(hashes[i], f.hashes[i], 8);
+        }
     }
 
 /*}}}*/
@@ -137,6 +141,16 @@ namespace aitf {
 
     void AITFPacket::set_flow(vector<int> f_ips) {
         for (int i = 0; i < 6; i++) flow.ips[i] = f_ips[i];
+    }
+
+    void AITFPacket::set_hashes(deque<char *> h) {
+
+        for (int i = 0; i < 6; i++) {
+            if (h[i])
+                memcpy(flow.hashes[i], h[i], 8);
+            else
+                memcpy(flow.hashes[i], "00000000", 8);
+        }
     }
 
     void AITFPacket::populate(char *s) {/*{{{*/

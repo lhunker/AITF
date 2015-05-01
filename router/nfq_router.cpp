@@ -77,17 +77,32 @@ namespace aitf {
      */
     AITFPacket nfq_router::handle_victim_request(AITFPacket *pkt) {/*{{{*/
         filter_line filt(pkt->getDest_ip(), pkt->get_flow(), true, pkt->getSrc_ip());
-        addFilter(filt);
-        //TODO setup adding flow to packet - pretty sure this is done because other things work
-        // but don't know where
+        for (int i = 0; i < 6; i++) {
+            if (pkt->flow.ips[i] != 0) {
+                filt.last_gw = pkt->flow.ips[i];
+                break;
+            }
+        }
+
         unsigned short seq;
         char nonce[8];
         RAND_bytes((unsigned char *) &seq, 2);
         RAND_bytes((unsigned char *) nonce, 8);
         AITFPacket req(AITF_HELO, seq, nonce);
-        req.dest_ip = pkt->dest_ip;
-        req.src_ip = pkt->src_ip;
-        seq_data[pkt->dest_ip] = seq;
+        if (addFilter(filt)) {
+            req.dest_ip = 0;
+            req.src_ip = 0;
+        } else {
+
+
+            req.dest_ip = pkt->dest_ip;
+            req.src_ip = pkt->src_ip;
+            seq_data[pkt->dest_ip] = seq;
+        }
+        //TODO setup adding flow to packet - pretty sure this is done because other things work
+        // but don't know where
+
+
         return req;
     }/*}}}*/
 
@@ -97,7 +112,6 @@ namespace aitf {
      */
     int nfq_router::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip,
                                     AITFPacket *pkt) {/*{{{*/
-        printf("Got AITF control message %d\n", pkt->get_mode());
         if (aitf_block.count(dest_ip)) {
             // If this address has been blocked, drop packet
             if (aitf_block[dest_ip]) {
@@ -141,11 +155,15 @@ namespace aitf {
             ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, 0, NULL);
             if (ret == -1) printf("Failed to set verdict\n");
             return ret;
+        } else {
+            printf("My precious...\n");
+            printf("Got AITF control message %d from %u\n", pkt->get_mode(), src_ip);
         }
 
 
         switch (pkt->get_mode()) {
             case AITF_HELO:
+
                 // If received the first stage, send back sequence +1 and same nonce
                 s_d = create_ustr(15);
                 sprintf((char *) s_d, "%d\n", dest_ip);
@@ -165,9 +183,9 @@ namespace aitf {
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
-                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1)) {
-                    return clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
-                }
+//                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1)) {
+//                    return clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
+//                }
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
 
@@ -220,6 +238,11 @@ namespace aitf {
             case AITF_REQ:
                 //Request from victim gateway
                 resp = handle_victim_request(pkt);
+                if (resp.getSrc_ip() == 0 && resp.getDest_ip()) {
+                    ret = nfq_set_verdict(qh, pkt_id, NF_DROP, 0, NULL);
+                    if (ret == -1) printf("Failed to set verdict\n");
+                    return ret;
+                }
                 for (int i = 0; i < 6; i++) {
                     if (f.ips[i] != 0) {
                         request_dest_ip = f.ips[i];
@@ -270,20 +293,20 @@ namespace aitf {
      * Adds a new filter to the filter tables
      * @param f the filter line to add
      */
-    void nfq_router::addFilter(filter_line f) {/*{{{*/
+    bool nfq_router::addFilter(filter_line f) {/*{{{*/
         // For each filter
         for (int i = 0; i < filters.size(); i++) {
             // If the filter matches
             if (filters[i].get_dest() == f.get_dest() && f.getSrc_ip() == filters[i].getSrc_ip()) {
                 // Check filter expiration times, reset attack count if expired
                 if (filters[i].is_active()) {
-                    return;     //we already have an active filter, do nothing
+                    return false;     //we already have an active filter, do nothing
                 }
-                if (filters[i].attack_time + FILTER_DURATION < time(NULL)) {
+                if (filters[i].attack_time + FILTER_DURATION < time(NULL)) {    //has expired
                     filters[i].attack_count = 1;
                     filters[i].attack_time = time(NULL);
                     filters[i].activate();
-                    return;
+                    return false;
                 }
                     // Otherwise just increment
                 else {
@@ -315,19 +338,20 @@ namespace aitf {
                             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                                 printf("Failed to send disconnect message\n");
 
-                            return;
+                            return true;
                         }
                     }
-                    if (filters[i].attack_count == 3) {
-                        escalate(f, f.get_flow());
+                    if (filters[i].attack_count >= 3) {
                         filters[i].activate();
+                        escalate(f, f.get_flow());
                         // TODO make new filter - fixed above?
                     }
                 }
-                return;
+                return false;
             }
         }
         filters.push_back(f);
+        return false;
     }/*}}}*/
 
 /**
@@ -460,24 +484,33 @@ namespace aitf {
      */
     void nfq_router::escalate(filter_line filt, Flow *f) {/*{{{*/
         if (f == NULL) {printf("No flow data! Cannot escalate!\n"); return;}
-        int next_gw = 0;
-        for (int i = 5; i >= 0; i--) {
-            if (f->ips[i] == filt.last_gw && i != 0) {next_gw = f->ips[i - 1]; break;}
+        unsigned next_gw = 0;
+        for (int i = 0; i < 6; i++) {
+            if (f->ips[i] != 0 && f->ips[i] == filt.last_gw) {
+                next_gw = f->ips[i + 1];
+                f->ips[i] = 0;
+//                strcpy(f->hashes[i], "00000000");
+                break;
+            }
             // Otherwise we have already tried this gateway, so remove it from the flow
             // since it won't be in the RR layer
-            f->ips[i] = 0;
-            strcpy(f->hashes[i], "00000000");
         }
-
-        if (!next_gw or next_gw == ip) {
+        if (!next_gw || next_gw == ip) {
             // TODO set local filter as permanent
         } else {
-            AITFPacket esc(AITF_REQ);
+            unsigned short seq;
+            char nonce[8];
+            RAND_bytes((unsigned char *) &seq, 2);
+            RAND_bytes((unsigned char *) nonce, 8);
+            AITFPacket esc(AITF_HELO, seq, nonce);
             vector<int> pkt_ips(6);
             for (int i = 0; i < 6; i++) pkt_ips[i] = f->ips[i];
             esc.set_flow(pkt_ips);
+
+            esc.set_hashes(f->hashes);
             esc.src_ip = filt.getSrc_ip();
             esc.dest_ip = filt.get_dest();
+            seq_data[esc.dest_ip] = seq;
             char *sock_ip = create_str(20);
             char bytes[4];
             bytes[3] = next_gw & 0xFF;
@@ -518,9 +551,7 @@ namespace aitf {
 
             // If filter has expired
             if (filters[i].check_expire()) {
-                printf("expired filter\n");
                 if (filters[i].get_temp()) {
-                    printf("escalate condition\n");
                     bool insub = false;
                     for (int i = 0; i < subnet.size(); i++) {
                         if (subnet[i].ip == filters[i].getSrc_ip()) {
@@ -553,8 +584,8 @@ namespace aitf {
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
                 }
-                
-                escalate(filters[i], flow);
+
+                    escalate(filters[i], flow);
             }
                 // Insert entries into beginning of vector to avoid changing indices on removal
                 indexes.insert(indexes.begin(), i);
