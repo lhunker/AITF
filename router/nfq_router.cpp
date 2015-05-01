@@ -86,6 +86,7 @@ namespace aitf {
         AITFPacket req(AITF_HELO, seq, nonce);
         req.dest_ip = pkt->dest_ip;
         req.src_ip = pkt->src_ip;
+        seq_data[pkt->dest_ip] = seq;
         return req;
     }/*}}}*/
 
@@ -117,7 +118,6 @@ namespace aitf {
         Flow f = pkt->get_flow();
         int request_dest_ip = 0;
         switch (pkt->get_mode()) {
-            // TODO add way to receive a filtering request from a victim
             case AITF_HELO:
                 // If received the first stage, send back sequence +1 and same nonce
                 seq_data[pkt->dest_ip] = pkt->get_seq();
@@ -128,29 +128,31 @@ namespace aitf {
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
-                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1) ||
-                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0)
+                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1)) {
                     return clear_aitf_conn(qh, pkt_id, pkt->getDest_ip());
+                }
                 // If received the second stage, send back sequence +1 and same nonce
                 resp.set_values(AITF_ACT, pkt->get_seq() + 1, pkt->get_nonce());
 
-                request_dest_ip = src_ip;
+                request_dest_ip = htonl(src_ip);
                 break;
             case AITF_ACT:
                 // Validate sequence and nonce
-                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 1) ||
-                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0)
+                if (seq_data[pkt->dest_ip] != (pkt->get_seq() - 2) ||
+                    strcmp(nonce_data[pkt->dest_ip], pkt->get_nonce()) != 0) {
                     return clear_aitf_conn(qh, pkt_id, pkt->dest_ip);
+                }
                 // If receiving a third stage packet, add filter
-                request_dest_ip = src_ip;
+                request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                // TODO change compliance modes here
+                // TODO Add filter
 //                filters.push_back(pkt->get_flow());
                 break;
             case AITF_ACK:
                 // Request/action should have been taken
                 // Don't need to verify since packet requires no action and
                 // can therefore be dropped regardless, so just remove entries
+                //TODO remove filter
                 free(nonce_data[pkt->dest_ip]);
                 seq_data.erase(pkt->dest_ip);
                 nonce_data.erase(pkt->dest_ip);
