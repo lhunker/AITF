@@ -19,6 +19,7 @@ namespace aitf {
     void FlowPaths::sendFilterRequest(Flow f, int ip) {
         f.debugPrint();
         AITFPacket req(AITF_REQ, ip, f);
+        req.dest_ip = 168036865; //TODO shouldn't be hardcoded
         int sock = socket(AF_INET, SOCK_DGRAM, 0);
         struct sockaddr_in addr;
         addr.sin_family = AF_INET;

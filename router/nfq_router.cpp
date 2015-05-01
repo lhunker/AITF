@@ -179,7 +179,6 @@ namespace aitf {
             return ret;
         }
 
-
         char *sock_ip = create_str(20);
         unsigned char bytes[4];
         bytes[3] = request_dest_ip & 0xFF;
