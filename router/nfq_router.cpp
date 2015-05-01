@@ -319,7 +319,8 @@ namespace aitf {
                     }
                     if (filters[i].attack_count == 3) {
                         // TODO escalate
-                        // TODO make new filter
+                        filters[i].activate();
+                        // TODO make new filter - fixed above?
                     }
                 }
                 return;
