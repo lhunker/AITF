@@ -282,7 +282,26 @@ namespace aitf {
                     // Check if attacker is an endhost
                     for (int j = 0; j < subnet.size(); j++) {
                         if (f.getSrc_ip() == subnet[j].ip) {
-                            // TODO disconnect endhost
+                            AITFPacket resp(6); // AITF_DISCONNECT
+                            char *sock_ip = create_str(20);
+                            char bytes[4];
+                            bytes[3] = f.getSrc_ip() & 0xFF;
+                            bytes[2] = (f.getSrc_ip() >> 8) & 0xFF;
+                            bytes[1] = (f.getSrc_ip() >> 16) & 0xFF;
+                            bytes[0] = (f.getSrc_ip() >> 24) & 0xFF;
+                            sprintf(sock_ip, "%d.%d.%d.%d", bytes[0], bytes[1], bytes[2], bytes[3]);
+
+                            int sock = socket(AF_INET, SOCK_DGRAM, 0);
+                            struct sockaddr_in addr;
+                            addr.sin_family = AF_INET;
+                            inet_aton(sock_ip, &addr.sin_addr);
+                            addr.sin_port = htons(AITF_PORT);
+                            free(sock_ip);
+                            char *msg = resp.serialize();
+                            int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
+                            if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
+                                printf("Failed to send disconnect message\n");
+
                             return;
                         }
                     }
