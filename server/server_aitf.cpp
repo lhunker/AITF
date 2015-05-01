@@ -30,6 +30,7 @@ namespace aitf {
         char *msg = req.serialize();
         if (sendto(sock, msg, sizeof(AITFPacket), 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
+        free(msg);
     }
 
     /**
@@ -48,7 +49,10 @@ namespace aitf {
             ((struct iphdr *) new_pkt)->tot_len = htons(pkt_size - FLOW_SIZE - 8);
         int np_size = ntohs(((struct iphdr *) new_pkt)->tot_len);
         compute_ip_checksum((struct iphdr *) new_pkt);
-        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        int ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        if (ret == -1) printf("Failed to set verdict\n");
+        free(new_pkt);
+        return ret;
     }/*}}}*/
 
     FlowPaths::FlowPaths() {/*{{{*/

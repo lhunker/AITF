@@ -180,6 +180,7 @@ namespace aitf {
                 memcpy(nonce_data[pkt->dest_ip], nonce, 8);
                 request_dest_ip = pkt->dest_ip;
                 resp.set_values(AITF_CONF, pkt->get_seq() + 1, nonce);
+                free(s_d);
                 break;
             case AITF_CONF:
                 // Validate sequence and nonce
@@ -222,6 +223,7 @@ namespace aitf {
                     msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                     if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                         printf("Failed to send AITF cease\n");
+                    free(msg);
                 }
                 break;
             case AITF_ACK:
@@ -286,6 +288,7 @@ namespace aitf {
         msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
             printf("Failed to send AITF response\n");
+        free(msg);
         return ret;
     }/*}}}*/
 
@@ -337,6 +340,7 @@ namespace aitf {
                             int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                                 printf("Failed to send disconnect message\n");
+                            free(msg);
 
                             return true;
                         }
@@ -403,6 +407,7 @@ namespace aitf {
         unsigned char *s_d = create_ustr(15);
         sprintf((char *) s_d, "%d\n", dest_ip);
         unsigned char *hash = HMAC(EVP_md5(), key, strlen(key), s_d, strlen((char *) s_d), NULL, NULL);
+        free(s_d);
 
         if (!pre) {
             FILE *fp = fopen("caps/pre_handle", "w+");
@@ -440,7 +445,10 @@ namespace aitf {
             fclose(fp);
         }
 
-        return nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        int ret = nfq_set_verdict(qh, pkt_id, NF_ACCEPT, np_size, new_pkt);
+        free(new_pkt);
+        if (ret == -1) printf("Failed to set verdict\n");
+        return ret;
     }/*}}}*/
 
     /**
@@ -529,6 +537,7 @@ namespace aitf {
             int msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
             if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                 printf("Failed to send AITF escalation\n");
+            free(msg);
         }
     }/*}}}*/
 
@@ -583,6 +592,7 @@ namespace aitf {
                         msg_size = sizeof(int) * 4 + 8 + FLOW_SIZE;
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
+                        free(msg);
                 }
 
                     escalate(filters[i], flow);
@@ -601,5 +611,3 @@ namespace aitf {
         return false;
     }/*}}}*/
 }
-
-
