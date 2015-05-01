@@ -1,5 +1,8 @@
 #include "server_aitf.h"
+#include <sys/time.h>
 #include "../router/checksum.h"
+ 
+#define MAX_MS_IN_ONE_DAY 86400000
 
 namespace aitf {
     Server::Server() {/*{{{*/
@@ -10,6 +13,13 @@ namespace aitf {
         delete flows;
     }/*}}}*/
 
+    unsigned int get_ms(struct timeval *tv) {/*{{{*/
+        unsigned int time = (tv->tv_sec) * 1000;
+        time += (tv->tv_usec / 1000);
+        time = time % MAX_MS_IN_ONE_DAY;
+        return time;
+    }/*}}}*/
+
     int Server::handle_aitf_pkt(struct nfq_q_handle *qh, int pkt_id, unsigned int src_ip, unsigned int dest_ip,
                                 AITFPacket *pkt) {/*{{{*/
         // TODO: will this ever actually receive one of these?
@@ -17,6 +27,10 @@ namespace aitf {
     }/*}}}*/
 
     void FlowPaths::sendFilterRequest(Flow f, int ip) {
+        struct timeval *tv;
+        gettimeofday(tv, NULL);
+        unsigned start_time = get_ms(tv);
+        printf("Filtering request sent at %u\n", start_time);
         f.debugPrint();
 
         AITFPacket req(AITF_REQ, htonl(ip), f);
