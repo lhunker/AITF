@@ -98,12 +98,12 @@ namespace aitf {
     const bool filter_line::trigger_filter(unsigned dest, unsigned src, Flow *f) {/*{{{*/
         if (!is_active()) {return false;}
         //if filter doesn't have source defined, just check flow and dest
-        if (hasFlow && src_ip == 0 && *f == flow && dest == dest_ip) {
+        if (hasFlow && src_ip == 0 && f != NULL && *f == flow && dest == dest_ip) {
             return true;
             // If no flow is defined in filter, just check ips
         } else if (!hasFlow && dest == dest_ip && src == src_ip) {
             return true;
             //otherwise compare all three
-        } else return hasFlow && flow == *f && dest == dest_ip && src == src_ip;
+        } else return hasFlow && f != NULL && flow == *f && dest == dest_ip && src == src_ip;
     }/*}}}*/
 }
