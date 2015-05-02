@@ -201,7 +201,7 @@ namespace aitf {
                 // If receiving a third stage packet, add filter
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
-                legacy = to_legacy_host(src_ip);
+                legacy = to_legacy_host(htonl(pkt->getSrc_ip()));
                 filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
                 addFilter(filt);
 

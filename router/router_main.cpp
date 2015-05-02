@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
         e.legacy = true;
     } else if (strcmp(argv[1], "10.4.10.7") == 0) {
         e.ip = 101319690;
-        e.legacy = true;
+        e.legacy = false;
     }
     endhosts.push_back(e);
     aitf::nfq_router nfq(endhosts, argv[1]);
