@@ -202,7 +202,7 @@ namespace aitf {
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 legacy = to_legacy_host(src_ip);
-                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), legacy);
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
                 addFilter(filt);
 
                 if (!legacy) {
@@ -471,7 +471,11 @@ namespace aitf {
      * @param f
      */
     void nfq_router::escalate(filter_line filt, Flow *f) {/*{{{*/
-        if (f == NULL) {printf("No flow data! Cannot escalate!\n"); return;}
+        if (f == NULL) {
+            printf("No flow data! Cannot escalate!\n");
+            return;
+        }
+        printf("esc\n");
         unsigned next_gw = 0;
         for (int i = 0; i < 6; i++) {
             if (f->ips[i] != 0 && f->ips[i] == filt.last_gw) {
@@ -542,12 +546,12 @@ namespace aitf {
             if (filters[i].check_expire()) {
                 if (filters[i].get_temp()) {
                     bool insub = false;
-                    for (int i = 0; i < subnet.size(); i++) {
-                        if (subnet[i].ip == filters[i].getSrc_ip()) {
+                    for (int j = 0; j < subnet.size(); j++) {
+                        if (subnet[j].ip == htonl(filters[i].getSrc_ip())) {
                             insub = true;
                         }
                     }
-                    if (insub) {
+                    if (insub)
                         AITFPacket cease(7); //AITF_DISCONNECT
                         char *sock_ip;
                         unsigned char bytes[4];
@@ -573,17 +577,18 @@ namespace aitf {
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
                         free(msg);
-                }
-
+                } else
                     escalate(filters[i], flow);
-            }
+
+            } else {
                 // Insert entries into beginning of vector to avoid changing indices on removal
                 indexes.insert(indexes.begin(), i);
                 continue;
+                }
             }
             if (filters[i].trigger_filter(d_ip, s_ip, flow)) {
                 return true;
-        }
+            }
         }
 
         for (int i = 0; i < indexes.size(); i++)
