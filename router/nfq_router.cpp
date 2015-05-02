@@ -551,7 +551,7 @@ namespace aitf {
                             insub = true;
                         }
                     }
-                    if (insub)
+                    if (insub) {
                         AITFPacket cease(7); //AITF_DISCONNECT
                         char *sock_ip;
                         unsigned char bytes[4];
@@ -577,13 +577,13 @@ namespace aitf {
                         if (sendto(sock, msg, msg_size, 0, (struct sockaddr *) &addr, sizeof(addr)) < 0)
                             printf("Failed to send AITF cease\n");
                         free(msg);
-                } else
-                    escalate(filters[i], flow);
+                    } else
+                        escalate(filters[i], flow);
 
-            } else {
-                // Insert entries into beginning of vector to avoid changing indices on removal
-                indexes.insert(indexes.begin(), i);
-                continue;
+                } else {
+                    // Insert entries into beginning of vector to avoid changing indices on removal
+                    indexes.insert(indexes.begin(), i);
+                    continue;
                 }
             }
             if (filters[i].trigger_filter(d_ip, s_ip, flow)) {
