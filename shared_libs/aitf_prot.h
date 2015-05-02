@@ -67,7 +67,7 @@ namespace aitf {
 
         void set_flow(vector<int>);
 
-        void set_hashes(deque<char *>);
+        void set_hashes(vector<char *>);
         void set_values(unsigned, unsigned short, char *);
 
         void populate(char*);

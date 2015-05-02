@@ -143,13 +143,14 @@ namespace aitf {
         for (int i = 0; i < 6; i++) flow.ips[i] = f_ips[i];
     }
 
-    void AITFPacket::set_hashes(deque<char *> h) {
-
+    void AITFPacket::set_hashes(vector<char *> h) {
         for (int i = 0; i < 6; i++) {
+
             if (h[i])
                 memcpy(flow.hashes[i], h[i], 8);
             else
                 memcpy(flow.hashes[i], "00000000", 8);
+            free(h[i]);
         }
     }
 

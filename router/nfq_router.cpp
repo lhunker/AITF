@@ -144,6 +144,7 @@ namespace aitf {
         int request_dest_ip = 0;
         filter_line filt;
         bool legacy;
+        bool s;
         //If not intended for me, forward
         bool mine = (htonl(ip) == dest_ip);
         for (int i = 0; i < subnet.size(); i++) {
@@ -202,7 +203,13 @@ namespace aitf {
                 request_dest_ip = htonl(src_ip);
                 resp.set_values(AITF_ACK, pkt->get_seq() + 1, pkt->get_nonce());
                 legacy = to_legacy_host(htonl(pkt->getSrc_ip()));
-                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy);
+                s = false;
+                for (int j = 0; j < subnet.size(); j++) {
+                    if (pkt->getDest_ip() == htonl(subnet[j].ip)) {
+                        s = true;
+                    }
+                }
+                filt.setIps(pkt->getDest_ip(), pkt->getSrc_ip(), !legacy && s);
                 addFilter(filt);
 
                 if (!legacy) {
@@ -498,8 +505,12 @@ namespace aitf {
             vector<int> pkt_ips(6);
             for (int i = 0; i < 6; i++) pkt_ips[i] = f->ips[i];
             esc.set_flow(pkt_ips);
-
-            esc.set_hashes(f->hashes);
+            vector <char *> h;
+            for (int i = 0; i < 6; i++){
+                h.push_back(create_str(8));
+                memcpy(h[i], f->hashes[i], 8);
+            }
+            esc.set_hashes(h);
             esc.src_ip = filt.getSrc_ip();
             esc.dest_ip = filt.get_dest();
             seq_data[esc.dest_ip] = seq;
